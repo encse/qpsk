@@ -633,6 +633,29 @@ blocks:
     coordinate: [232, 176.0]
     rotation: 0
     state: enabled
+- name: satellites_ccsds_concatenated_deframer_0
+  id: satellites_ccsds_concatenated_deframer
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    convolutional: '"CCSDS"'
+    frame_size: '223'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    options: '""'
+    precoding: None
+    rs_basis: '"dual"'
+    rs_interleaving: '1'
+    scrambler: '"CCSDS"'
+    threshold: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 232.0]
+    rotation: 0
+    state: enabled
 - name: virtual_sink_0_1
   id: virtual_sink
   parameters:
