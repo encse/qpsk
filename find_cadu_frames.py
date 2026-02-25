@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import Iterator, Optional
+from decode_jpeg import decode_14_blocks
 from rs import CorrectRS255
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from PIL import Image
 
 CADU_ASM = 0x1ACFFC1D
 CADU_ASM_INV = CADU_ASM ^ 0xFFFFFFFF
@@ -101,6 +105,19 @@ class CcsdsHeader:
 @dataclass
 class CcsdsPacket:
     header: CcsdsHeader
+    payload: bytes
+
+
+@dataclass
+class Segment:
+    timestamp: datetime           # datetime
+
+    MCUN: int                  # uint8_t
+    QT: int                    # uint8_t
+    DC: int                    # uint8_t
+    AC: int                    # uint8_t
+    QFM: int                   # uint16_t
+    QF: int                    # uint8_t
     payload: bytes
 
 def derandomize(data: bytes) -> bytes:
@@ -250,6 +267,30 @@ def parse_ccsds_packet(header: CcsdsHeader, payload: bytes) -> CcsdsPacket:
     )
 
 
+def parse_segment(
+    data: bytes,
+) -> Segment:
+    assert len(data) >= 14
+
+    timestamp = parse_ccsds_time_full_raw_utc(data)
+
+    MCUN = data[8]
+    QT = data[9]
+    DC = (data[10] & 0xF0) >> 4
+    AC = data[10] & 0x0F
+    QFM = (data[11] << 8) | data[12]
+    QF = data[13]
+
+    return Segment(
+        timestamp=timestamp,
+        MCUN=MCUN,
+        QT=QT,
+        DC=DC,
+        AC=AC,
+        QFM=QFM,
+        QF=QF,
+        payload=data[14:]
+    )
 
 def extract_cadu_frames(bits, cadu_len_bytes=1024) -> Iterator[Cadu]:
     """
@@ -353,12 +394,94 @@ def extract_ccsds_packets(bits) -> Iterator[CcsdsPacket]:
         if len(payload) > 0:
             ccsds_bytes = payload
 
-bits = [b & 1 for b in open("differential.bin","rb").read()]
 
-for ccsds in extract_ccsds_packets(bits=bits):
-    pass
-    # print(f"{ccsds.header.apid} {ccsds.header.packet_sequence_count}")
-    # if (ccsds.header.packet_sequence_count == 3489):
-        # print("x")
+def parse_ccsds_time_full_raw_utc(data: bytes,) -> datetime:
+    METEOR_EPOCH = 11322
 
+    assert len(data) >= 8, f"Need at least 8 bytes for CCSDS time, got {len(data)}"
+
+    days = (data[0] << 8) | data[1]
+    milliseconds_of_day = (
+        (data[2] << 24)
+        | (data[3] << 16)
+        | (data[4] << 8)
+        | data[5]
+    )
+    microseconds_of_millisecond = (data[6] << 8) | data[7]
+
+    total_days = METEOR_EPOCH + days
+
+    seconds_of_day = milliseconds_of_day / 1000 + microseconds_of_millisecond / 1000000
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+    return epoch + timedelta(days=total_days, seconds=seconds_of_day)
+
+def main():
+    bits = [b & 1 for b in open("differential.bin","rb").read()]
+
+    out_dir = Path("output")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+
+    BLOCKS_PER_LINE = 14
+    BLOCK_WIDTH = 8 * 14
+    BLOCK_HEIGHT = 8
+    IMAGE_WIDTH = BLOCKS_PER_LINE * BLOCK_WIDTH  # 1568
+
+
+    big_rows = []            # final image rows
+    blocks_in_line = 0
+    current_line = None      # BLOCK__HEIGHT rows of width IMAGE_WIDTH
+
+    for ccsds in extract_ccsds_packets(bits=bits):
+        apid = ccsds.header.apid
+        payload = ccsds.payload
+        if apid == 70:
+            # telemetry 
+            if len(payload) >= 16:
+                print(parse_ccsds_time_full_raw_utc(payload))
+        elif apid == 65:
+            
+            segment = parse_segment(payload)
+            pixels = decode_14_blocks(
+                segment.payload,
+                segment.QF,
+            )
+
+            # Start new 8-row stripe if needed
+            if blocks_in_line == 0:
+                current_line = [
+                    [0] * IMAGE_WIDTH for _ in range(BLOCK_HEIGHT)
+                ]
+
+            x0 = blocks_in_line * BLOCK_WIDTH
+
+            # Copy block into current line
+            for row in range(BLOCK_HEIGHT):
+                for col in range(BLOCK_WIDTH):
+                    current_line[row][x0 + col] = pixels[row][col]
+
+            blocks_in_line += 1
+
+            # Line complete
+            if blocks_in_line == BLOCKS_PER_LINE:
+                big_rows.extend(current_line)
+                blocks_in_line = 0
+
+
+        out_path = out_dir / f"{apid}.bin"
+
+        with out_path.open("ab") as f:
+            f.write(payload)
+
+    if len(big_rows) > 0:
+        height = len(big_rows)
+        img = Image.new("L", (IMAGE_WIDTH, height))
+        flat = [pixel for row in big_rows for pixel in row]
+        img.putdata(flat)
+        img.save("output/pic.png")
+
+
+if __name__ == '__main__':
+    main()
 
