@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator, Optional
+from typing import Iterator, Optional, List
 from decode_jpeg import decode_14_blocks
 from rs import CorrectRS255
 from datetime import datetime, timedelta, timezone
@@ -119,6 +119,12 @@ class Segment:
     QFM: int                   # uint16_t
     QF: int                    # uint8_t
     payload: bytes
+
+@dataclass
+class Channel:
+    apid: int
+    big_rows: List[List[int]]
+    current_line: int
 
 def derandomize(data: bytes) -> bytes:
     out = bytearray(len(data))
@@ -416,6 +422,15 @@ def parse_ccsds_time_full_raw_utc(data: bytes,) -> datetime:
 
     return epoch + timedelta(days=total_days, seconds=seconds_of_day)
 
+
+def channel_to_gray_image(channel: Channel, image_width: int) -> Image.Image:
+    height = len(channel.big_rows)
+    img = Image.new("L", (image_width, height))
+    flat = [pixel for row in channel.big_rows for pixel in row]
+    img.putdata(flat)
+    return img
+
+
 def main():
     bits = [b & 1 for b in open("differential.bin","rb").read()]
 
@@ -429,12 +444,7 @@ def main():
     IMAGE_WIDTH = BLOCKS_PER_LINE * BLOCK_WIDTH  # 1568
 
 
-    big_rows = []            # final image rows
-    blocks_in_line = 0
-    current_line = None
-    period = 3 * 14 + 1
-    mod = 16384
-    next_seq = None
+    apid_to_channel: dict[int, Channel] = {}
 
     for ccsds in extract_ccsds_packets(bits=bits):
         ccsds.header.packet_sequence_count
@@ -445,7 +455,12 @@ def main():
             # telemetry 
             if len(payload) >= 16:
                 print(parse_ccsds_time_full_raw_utc(payload))
-        elif apid == 65:
+        elif apid >= 60 and apid < 70:
+
+            channel = apid_to_channel.get(apid)
+            if channel is None:
+                channel = Channel(apid=apid, big_rows=[], current_line=None)
+                apid_to_channel[apid] = channel
 
             segment = parse_segment(payload)
             pixels = decode_14_blocks(segment.payload, segment.QF)
@@ -454,20 +469,20 @@ def main():
             x0 = packet_idx_in_line * BLOCK_WIDTH
 
             # Start-of-line marker arrived while we still have a line in progress.
-            if packet_idx_in_line == 0 and current_line is not None:
+            if packet_idx_in_line == 0 and channel.current_line is not None:
                 # emit partial line
-                big_rows.extend(current_line)
-                current_line = None
+                channel.big_rows.extend(channel.current_line)
+                channel.current_line = None
 
-            if current_line is None:
-                current_line = [[0] * IMAGE_WIDTH for _ in range(BLOCK_HEIGHT)]
+            if channel.current_line is None:
+                channel.current_line = [[0] * IMAGE_WIDTH for _ in range(BLOCK_HEIGHT)]
 
             for row in range(BLOCK_HEIGHT):
-                current_line[row][x0:x0 + BLOCK_WIDTH] = pixels[row]
+                channel.current_line[row][x0:x0 + BLOCK_WIDTH] = pixels[row]
 
             if packet_idx_in_line == BLOCKS_PER_LINE - 1:
-                big_rows.extend(current_line)
-                current_line = None
+                channel.big_rows.extend(channel.current_line)
+                channel.current_line = None
 
 
         out_path = out_dir / f"{apid}.bin"
@@ -475,13 +490,29 @@ def main():
         with out_path.open("ab") as f:
             f.write(payload)
 
-    if len(big_rows) > 0:
-        height = len(big_rows)
-        img = Image.new("L", (IMAGE_WIDTH, height))
-        flat = [pixel for row in big_rows for pixel in row]
-        img.putdata(flat)
-        img.save("output/pic.png")
+    for channel in apid_to_channel.values():
+        if len(channel.big_rows) > 0:
+            img = channel_to_gray_image(channel, IMAGE_WIDTH)
+            img.save(f"output/pic{channel.apid}.png")
 
+    r_ch = apid_to_channel.get(65)
+    g_ch = apid_to_channel.get(65)
+    b_ch = apid_to_channel.get(64)
+
+    if r_ch is not None and g_ch is not None and b_ch is not None:
+        if len(r_ch.big_rows) > 0 and len(g_ch.big_rows) > 0 and len(b_ch.big_rows) > 0:
+            r = channel_to_gray_image(r_ch, IMAGE_WIDTH)
+            g = channel_to_gray_image(g_ch, IMAGE_WIDTH)
+            b = channel_to_gray_image(b_ch, IMAGE_WIDTH)
+
+            # Ensure same height (crop all to the smallest common height)
+            h = min(r.height, g.height, b.height)
+            if r.height != h: r = r.crop((0, 0, IMAGE_WIDTH, h))
+            if g.height != h: g = g.crop((0, 0, IMAGE_WIDTH, h))
+            if b.height != h: b = b.crop((0, 0, IMAGE_WIDTH, h))
+
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb.save("output/composite_64_65_67_rgb.png")
 
 if __name__ == '__main__':
     main()
