@@ -68,11 +68,10 @@ FROM_DUAL_BASIS = bytes([
     0xe1, 0x81, 0x4d, 0xa4, 0x68, 0x08, 0xc4, 0xdd, 0x11, 0x71, 0xbd
 ])
 
-@dataclass
-class Cadu:
-    header: bytes
+@dataclass(frozen=True, slots=True)
+class Mpdu:
+    first_header_pointer: int
     payload: bytes
-
 
 @dataclass
 class VcduFrame:
@@ -81,61 +80,28 @@ class VcduFrame:
     vcid: int               # 6 bits
     counter: int            # 24-bit, big-endian
     replay_flag: bool       # 1 bit (MSB of header byte 5)
-    mpdu: bytes             # 886 bytes
+    mpdu: Mpdu              # 886 bytes
     
 
-def extract_cadu_frames(bits, cadu_len_bytes=1024) -> Iterator[Cadu]:
-    """
-    bits: list[int] of 0/1
-    Returns: list[bytes] (each is a full CADU frame, length = cadu_len_bytes)
-    Behavior: shifter-based ASM search + automatic bit inversion (ASM or ~ASM)
-    """
-    cadu_size_bits = cadu_len_bytes * 8
-    shifter = 0
+@dataclass
+class Cadu:
+    header: bytes
+    payload: bytes
 
-    in_frame = False
-    bit_inversion = 0  # 0 or 1
-    bit_of_frame = 0
+@dataclass
+class CcsdsHeader:
+    version: int
+    type: bool
+    secondary_header_flag: bool
+    apid: int
+    sequence_flag: int
+    packet_sequence_count: int
+    packet_length: int
 
-    frame_buf = bytearray(cadu_len_bytes)
-
-    def reset_frame():
-        nonlocal bit_of_frame, frame_buf
-        frame_buf[:] = b"\x00" * cadu_len_bytes
-        frame_buf[0] = (CADU_ASM >> 24) & 0xFF
-        frame_buf[1] = (CADU_ASM >> 16) & 0xFF
-        frame_buf[2] = (CADU_ASM >>  8) & 0xFF
-        frame_buf[3] = (CADU_ASM >>  0) & 0xFF
-        bit_of_frame = 32
-
-    def write_bit(b):
-        nonlocal bit_of_frame
-        byte_i = bit_of_frame // 8
-        frame_buf[byte_i] = ((frame_buf[byte_i] << 1) & 0xFF) | (b & 1)
-        bit_of_frame += 1
-
-    for b in bits:
-        bit = b & 1
-        shifter = ((shifter << 1) & 0xFFFFFFFF) | bit
-
-        if in_frame:
-            write_bit(bit ^ bit_inversion)
-
-            if bit_of_frame == cadu_size_bits:
-                frame = bytes(frame_buf)
-                yield Cadu(frame[:4], frame[4:])
-                in_frame = False
-            continue
-
-        if shifter == CADU_ASM:
-            bit_inversion = 0
-            reset_frame()
-            in_frame = True
-        elif shifter == CADU_ASM_INV:
-            bit_inversion = 1
-            reset_frame()
-            in_frame = True
-
+@dataclass
+class CcsdsPacket:
+    header: CcsdsHeader
+    payload: bytes
 
 def derandomize(data: bytes) -> bytes:
     out = bytearray(len(data))
@@ -223,7 +189,18 @@ def parse_vcdu(vcdu: Optional[bytes]) -> Optional[VcduFrame]:
     replay_flag = (data[5] >> 7) == 1
 
     mpdu = data[VCDU_HEADER_LEN:]
-    assert len(mpdu) == VCDU_MPDU_LEN, f"MPDU must be {VCDU_MPDU_LEN} bytes, got {len(mpdu)}"
+
+    # ---- MPDU ----
+    # first_header_pointer from bytes 8 and 9
+    first_header_pointer = ((data[8] & 0b0000_0111) << 8) | data[9]
+
+    # MPDU payload begins at byte 10
+    mpdu_payload = data[10:]
+
+    mpdu = Mpdu(
+        first_header_pointer=first_header_pointer,
+        payload=mpdu_payload,
+    )
 
     return VcduFrame(
         version=version,
@@ -234,13 +211,154 @@ def parse_vcdu(vcdu: Optional[bytes]) -> Optional[VcduFrame]:
         mpdu=mpdu,
     )
 
-bits = [b & 1 for b in open("differential.bin","rb").read()]
-cadu_frames = extract_cadu_frames(bits)
 
-with CorrectRS255(nsym=32, prim=0x187, fcr=112, generator_gap=11) as rs:
-    for cadu in cadu_frames:
-        cvcdu = derandomize(cadu.payload)
-        vcdu = parse_vcdu(rs_decode_interleaved_4(rs, cvcdu))
-        if vcdu:
-            print(vcdu.mpdu)
+CCSDS_HEADER_LEN = 6
+def parse_ccsds_header(data: bytes) -> tuple[CcsdsHeader, bytes]:
+
+    assert len(data) >= CCSDS_HEADER_LEN, \
+        f"not enough bytes for CCSDS header (need {CCSDS_HEADER_LEN}, got {len(data)})"
+
+    version = data[0] >> 5
+    pkt_type = ((data[0] >> 4) & 0x01) == 1
+    secondary_header_flag = ((data[0] >> 3) & 0x01) == 1
+    apid = ((data[0] & 0b0000_0111) << 8) | data[1]
+
+    sequence_flag = data[2] >> 6
+    packet_sequence_count = ((data[2] & 0b0011_1111) << 8) | data[3]
+
+    packet_length = (data[4] << 8) | data[5] 
+    packet_length += 1
+
+    rest = data[CCSDS_HEADER_LEN:]
+    header = CcsdsHeader(
+        version=version,
+        type=pkt_type,
+        secondary_header_flag=secondary_header_flag,
+        apid=apid,
+        sequence_flag=sequence_flag,
+        packet_sequence_count=packet_sequence_count,
+        packet_length=packet_length,
+    )
+
+    return header, rest
+
+def parse_ccsds_packet(header: CcsdsHeader, payload: bytes) -> CcsdsPacket:
+    assert len(payload) == header.packet_length
+    return CcsdsPacket(
+        header=header,
+        payload=payload,
+    )
+
+
+
+def extract_cadu_frames(bits, cadu_len_bytes=1024) -> Iterator[Cadu]:
+    """
+    bits: list[int] of 0/1
+    Returns: list[bytes] (each is a full CADU frame, length = cadu_len_bytes)
+    Behavior: shifter-based ASM search + automatic bit inversion (ASM or ~ASM)
+    """
+    cadu_size_bits = cadu_len_bytes * 8
+    shifter = 0
+
+    in_frame = False
+    bit_inversion = 0  # 0 or 1
+    bit_of_frame = 0
+
+    frame_buf = bytearray(cadu_len_bytes)
+
+    def reset_frame():
+        nonlocal bit_of_frame, frame_buf
+        frame_buf[:] = b"\x00" * cadu_len_bytes
+        frame_buf[0] = (CADU_ASM >> 24) & 0xFF
+        frame_buf[1] = (CADU_ASM >> 16) & 0xFF
+        frame_buf[2] = (CADU_ASM >>  8) & 0xFF
+        frame_buf[3] = (CADU_ASM >>  0) & 0xFF
+        bit_of_frame = 32
+
+    def write_bit(b):
+        nonlocal bit_of_frame
+        byte_i = bit_of_frame // 8
+        frame_buf[byte_i] = ((frame_buf[byte_i] << 1) & 0xFF) | (b & 1)
+        bit_of_frame += 1
+
+    for b in bits:
+        bit = b & 1
+        shifter = ((shifter << 1) & 0xFFFFFFFF) | bit
+
+        if in_frame:
+            write_bit(bit ^ bit_inversion)
+
+            if bit_of_frame == cadu_size_bits:
+                frame = bytes(frame_buf)
+                yield Cadu(frame[:4], frame[4:])
+                in_frame = False
+            continue
+
+        if shifter == CADU_ASM:
+            bit_inversion = 0
+            reset_frame()
+            in_frame = True
+        elif shifter == CADU_ASM_INV:
+            bit_inversion = 1
+            reset_frame()
+            in_frame = True
+
+
+def extract_vcdu_frames(bits) -> Iterator[VcduFrame]:
+    with CorrectRS255(nsym=32, prim=0x187, fcr=112, generator_gap=11) as rs:
+        for cadu in extract_cadu_frames(bits):
+            cvcdu = derandomize(cadu.payload)
+            res = rs_decode_interleaved_4(rs, cvcdu)
+            if res:
+                yield parse_vcdu(res)
+            else:
+                yield None
+        
+
+def extract_ccsds_packets(bits) -> Iterator[CcsdsPacket]:
+
+    ccsds_bytes = None
+    for vcdu in extract_vcdu_frames(bits):
+        if vcdu is None:
+            ccsds_bytes = None
+            continue
+
+        payload = vcdu.mpdu.payload
+        if vcdu.mpdu.first_header_pointer != 0x7ff:
+            if ccsds_bytes is not None:
+                ccsds_bytes = ccsds_bytes + payload[:vcdu.mpdu.first_header_pointer]
+
+                # We expect one complete packet in ccsds_bytes.
+                # If shorter than required, drop it.
+                # If longer, emit the first complete packet and ignore the rest.
+                if len(ccsds_bytes) >= CCSDS_HEADER_LEN:
+                    ccsds_header, rest = parse_ccsds_header(ccsds_bytes)
+                    if len(rest) >= ccsds_header.packet_length:
+                        yield parse_ccsds_packet(ccsds_header, rest[:ccsds_header.packet_length])
+                ccsds_bytes = None
+            payload = payload[vcdu.mpdu.first_header_pointer:]
+
+        while len(payload) >= CCSDS_HEADER_LEN:
+            ccsds_header, rest = parse_ccsds_header(payload)
+            if len(rest) >= ccsds_header.packet_length:
+                yield parse_ccsds_packet(ccsds_header, rest[:ccsds_header.packet_length])
+                payload = rest[ccsds_header.packet_length:]
+            else:
+                if ccsds_bytes is None:
+                    ccsds_bytes = payload
+                else:
+                    ccsds_bytes = ccsds_bytes + payload
+                payload = b""
+
+        if len(payload) > 0:
+            ccsds_bytes = payload
+
+bits = [b & 1 for b in open("differential.bin","rb").read()]
+
+for ccsds in extract_ccsds_packets(bits=bits):
+    pass
+    # print(f"{ccsds.header.apid} {ccsds.header.packet_sequence_count}")
+    # if (ccsds.header.packet_sequence_count == 3489):
+        # print("x")
+
 
