@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator
-from reedsolo import RSCodec, ReedSolomonError
+from typing import Iterator, Optional
 from rs import CorrectRS255
 
 CADU_ASM = 0x1ACFFC1D
@@ -75,6 +74,16 @@ class Cadu:
     payload: bytes
 
 
+@dataclass
+class VcduFrame:
+    version: int            # 2 bits
+    spacecraft_id: int      # 8 bits (6+2)
+    vcid: int               # 6 bits
+    counter: int            # 24-bit, big-endian
+    replay_flag: bool       # 1 bit (MSB of header byte 5)
+    mpdu: bytes             # 886 bytes
+    
+
 def extract_cadu_frames(bits, cadu_len_bytes=1024) -> Iterator[Cadu]:
     """
     bits: list[int] of 0/1
@@ -135,36 +144,103 @@ def derandomize(data: bytes) -> bytes:
     return bytes(out)
 
 
-def rs_decode_interleaved_4(payload1020: bytes) -> bytes:
-    assert len(payload1020) == 1020
-    out = bytearray(4 * 223)
+def deinterleave4(payload: bytes) -> bytearray:
+    assert len(payload) == 1020
 
-    with CorrectRS255(
-        nsym=32,
-        prim=0x187,
-        fcr=112,
-        generator_gap=11,
-    ) as rs:
-        for lane in range(4):
-            lane255 = payload1020[lane::4]  # 255 bytes, interleaved extraction
-            # lane255 = bytes(TO_DUAL_BASIS[b] for b in lane255)
-            assert len(lane255) == 255
-            try:
-                decoded223 = rs.decode(lane255)
-                out[lane * 223 : (lane + 1) * 223] = decoded223
-                print("ok")
-            except Exception as err:
-                pass
+    lanes = 4
+    lane_size = len(payload) // lanes
 
-       
-    return bytes(out)
+    out = bytearray(len(payload))
+
+    for lane in range(lanes):
+        for i in range(lane_size):
+            out[lane * lane_size + i] = payload[i * lanes + lane]
+
+    return out
+
+
+def interleave4(payload: bytes) -> bytearray:
+    if not payload:
+        return None
+    
+    assert len(payload) % 4 == 0
+
+    lanes = 4
+    lane_size = len(payload) // lanes
+
+    out = bytearray(len(payload))
+
+    for lane in range(lanes):
+        for i in range(lane_size):
+            out[i * lanes + lane] = payload[lane * lane_size + i]
+
+    return out
+
+def rs_decode_interleaved_4(rs: CorrectRS255, payload: bytes) -> bytes:
+    assert len(payload) == 1020
+
+    lanes = 4
+    decoded_len = 223
+    out = bytearray(lanes * decoded_len)
+
+    for lane in range(lanes):
+        lane255 = payload[lane::lanes]  # 255 bytes interleaved readout
+        assert len(lane255) == 255
+
+        try:
+            decoded223 = rs.decode(lane255)
+            assert len(decoded223) == decoded_len
+
+            # write back interleaved
+            for i in range(decoded_len):
+                out[i * lanes + lane] = decoded223[i]
+
+        except Exception:
+            return None
+
+    return out
+
+
+def parse_vcdu(vcdu: Optional[bytes]) -> Optional[VcduFrame]:
+
+    VCDU_HEADER_LEN = 6
+    VCDU_MPDU_LEN = 886
+    VCDU_TOTAL_LEN = VCDU_HEADER_LEN + VCDU_MPDU_LEN
+
+
+    if vcdu is None:
+        return None
+
+    data = bytes(vcdu)
+
+    assert len(data) == VCDU_TOTAL_LEN, \
+        f"VCDU must be {VCDU_TOTAL_LEN} bytes, got {len(data)}"
+
+    version = data[0] >> 6
+    spacecraft_id = ((data[0] & 0b0011_1111) << 2) | (data[1] >> 6)
+    vcid = data[1] & 0b0011_1111
+    counter = (data[2] << 16) | (data[3] << 8) | data[4]
+    replay_flag = (data[5] >> 7) == 1
+
+    mpdu = data[VCDU_HEADER_LEN:]
+    assert len(mpdu) == VCDU_MPDU_LEN, f"MPDU must be {VCDU_MPDU_LEN} bytes, got {len(mpdu)}"
+
+    return VcduFrame(
+        version=version,
+        spacecraft_id=spacecraft_id,
+        vcid=vcid,
+        counter=counter,
+        replay_flag=replay_flag,
+        mpdu=mpdu,
+    )
 
 bits = [b & 1 for b in open("differential.bin","rb").read()]
 cadu_frames = extract_cadu_frames(bits)
 
-for frame in cadu_frames:
-    payload = frame.payload
-    payload = derandomize(payload)
+with CorrectRS255(nsym=32, prim=0x187, fcr=112, generator_gap=11) as rs:
+    for cadu in cadu_frames:
+        cvcdu = derandomize(cadu.payload)
+        vcdu = parse_vcdu(rs_decode_interleaved_4(rs, cvcdu))
+        if vcdu:
+            print(vcdu.mpdu)
 
-    assert payload[5] != 0xFF, "Unexpected globally inverted CADU after derandomization"
-    payload = rs_decode_interleaved_4(payload)
