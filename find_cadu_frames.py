@@ -431,9 +431,14 @@ def main():
 
     big_rows = []            # final image rows
     blocks_in_line = 0
-    current_line = None      # BLOCK__HEIGHT rows of width IMAGE_WIDTH
+    current_line = None
+    period = 3 * 14 + 1
+    mod = 16384
+    next_seq = None
 
     for ccsds in extract_ccsds_packets(bits=bits):
+        ccsds.header.packet_sequence_count
+
         apid = ccsds.header.apid
         payload = ccsds.payload
         if apid == 70:
@@ -441,32 +446,28 @@ def main():
             if len(payload) >= 16:
                 print(parse_ccsds_time_full_raw_utc(payload))
         elif apid == 65:
-            
+
             segment = parse_segment(payload)
-            pixels = decode_14_blocks(
-                segment.payload,
-                segment.QF,
-            )
+            pixels = decode_14_blocks(segment.payload, segment.QF)
 
-            # Start new 8-row stripe if needed
-            if blocks_in_line == 0:
-                current_line = [
-                    [0] * IMAGE_WIDTH for _ in range(BLOCK_HEIGHT)
-                ]
+            packet_idx_in_line = segment.MCUN // 14
+            x0 = packet_idx_in_line * BLOCK_WIDTH
 
-            x0 = blocks_in_line * BLOCK_WIDTH
-
-            # Copy block into current line
-            for row in range(BLOCK_HEIGHT):
-                for col in range(BLOCK_WIDTH):
-                    current_line[row][x0 + col] = pixels[row][col]
-
-            blocks_in_line += 1
-
-            # Line complete
-            if blocks_in_line == BLOCKS_PER_LINE:
+            # Start-of-line marker arrived while we still have a line in progress.
+            if packet_idx_in_line == 0 and current_line is not None:
+                # emit partial line
                 big_rows.extend(current_line)
-                blocks_in_line = 0
+                current_line = None
+
+            if current_line is None:
+                current_line = [[0] * IMAGE_WIDTH for _ in range(BLOCK_HEIGHT)]
+
+            for row in range(BLOCK_HEIGHT):
+                current_line[row][x0:x0 + BLOCK_WIDTH] = pixels[row]
+
+            if packet_idx_in_line == BLOCKS_PER_LINE - 1:
+                big_rows.extend(current_line)
+                current_line = None
 
 
         out_path = out_dir / f"{apid}.bin"
