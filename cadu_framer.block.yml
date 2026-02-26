@@ -1,0 +1,30 @@
+id: cadu_framer
+label: cadu_framer
+category: '[my blocks]'
+
+parameters:
+- id: cadu_len_bytes
+  label: CADU length (bytes)
+  dtype: int
+  default: '1024'
+- id: cadu_asm
+  label: CADU ASM (hex)
+  dtype: int
+  default: '0x1ACFFC1D'
+
+inputs:
+- label: in
+  dtype: byte
+  vlen: 1
+
+# Message output port
+outputs:
+- id: cadu
+  label: cadu
+  domain: message
+
+templates:
+  imports: 'from cadu_framer import cadu_framer'
+  make: "cadu_framer(\n    cadu_len_bytes=${ cadu_len_bytes },\n    cadu_asm=${ cadu_asm },\n)"
+
+file_format: 1
