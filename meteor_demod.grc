@@ -327,11 +327,27 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [992, 1092.0]
+    coordinate: [784, 1108.0]
+    rotation: 0
+    state: enabled
+- name: ccsds_image_viewer_0
+  id: ccsds_image_viewer
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    gui_hint: 0,0,1,1
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [960, 1044.0]
     rotation: 0
     state: enabled
 - name: digital_clock_recovery_mm_xx_0
@@ -736,7 +752,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [816, 1012.0]
+    coordinate: [712, 1012.0]
     rotation: 0
     state: enabled
 - name: take_n_0
@@ -862,6 +878,7 @@ connections:
 - [blocks_multiply_const_vxx_0, '0', virtual_sink_0_1_0_0, '0']
 - [blocks_multiply_const_vxx_0_1, '0', blocks_complex_to_float_0, '0']
 - [cadu_framer_0, cadu, satellites_ccsds_descrambler_0, in]
+- [ccsds_image_sink_0, img_out, ccsds_image_viewer_0, in]
 - [digital_clock_recovery_mm_xx_0, '0', qtgui_const_sink_x_0_0_0_0, '0']
 - [digital_clock_recovery_mm_xx_0, '0', virtual_sink_0_1_0, '0']
 - [digital_costas_loop_cc_0, '0', blocks_complex_to_float_0_0, '0']

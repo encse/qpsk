@@ -11,7 +11,11 @@ inputs:
     id: in
     optional: false
 
-outputs: []
+outputs: 
+  - domain: message
+    id: img_out
+    optional: false
+
 
 parameters: []
 

@@ -1,0 +1,38 @@
+id: ccsds_image_viewer
+label: CCSDS Image Viewer
+flags: [python, qtgui]
+
+templates:
+  imports: |-
+    from ccsds_image_viewer import CcsdsImageViewer
+    from PyQt5 import Qt, sip
+
+  make: |-
+    <%
+      win = 'self._%s_win'%id
+    %>\
+    self.${id} = CcsdsImageViewer(${width})
+    self._${id}_win = sip.wrapinstance(self.${id}.qwidget(), Qt.QWidget)
+    ${gui_hint() % win}
+
+  callbacks:
+    - set_gui_hint(${gui_hint})
+
+parameters:
+  - id: width
+    label: Width (pixels)
+    dtype: int
+    default: 1568
+  - id: gui_hint
+    label: GUI Hint
+    dtype: gui_hint
+    default: '"0,0,1,1"'
+
+
+inputs:
+  - domain: message
+    id: in
+
+outputs: []
+
+file_format: 1

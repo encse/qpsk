@@ -147,11 +147,13 @@ def parse_space_packet(data):
 class CcsdsImageSink(gr.basic_block):
 
     def __init__(self, out_dir: str = "output"):
-        gr.basic_block.__init__(self, name="ccsds_image_sink", in_sig=None, out_sig=None)
+        gr.basic_block.__init__(self, name="ccsds_image_sink", in_sig=[], out_sig=[])
 
         self.message_port_register_in(pmt.intern("in"))
-        self.set_msg_handler(pmt.intern("in"), self.handle_msg)
+        self.message_port_register_out(pmt.intern("img_out"))
 
+        self.set_msg_handler(pmt.intern("in"), self.handle_msg)
+        
         self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -193,6 +195,18 @@ class CcsdsImageSink(gr.basic_block):
             # If new line starts but previous wasn't complete → flush partial
             if packet_idx_in_line == 0 and channel.current_line is not None:
                 channel.big_rows.extend(channel.current_line)
+                if apid == 64:
+                    # flatten 8 rows
+                    flat = [
+                        pixel
+                        for row in channel.current_line
+                        for pixel in row
+                    ]
+
+                    vec = pmt.init_u8vector(len(flat), flat)
+                    msg = pmt.cons(pmt.PMT_NIL, vec)
+
+                    self.message_port_pub(pmt.intern("img_out"), msg)
                 channel.current_line = None
 
             if channel.current_line is None:
@@ -205,6 +219,11 @@ class CcsdsImageSink(gr.basic_block):
 
             if packet_idx_in_line == BLOCKS_PER_LINE - 1:
                 channel.big_rows.extend(channel.current_line)
+                if apid == 64:
+                    for row in channel.current_line:
+                        vec = pmt.init_u8vector(len(row), row)
+                        msg = pmt.cons(pmt.PMT_NIL, vec)
+                        self.message_port_pub(pmt.intern("img_out"), msg)
                 channel.current_line = None
 
         # Raw dump
