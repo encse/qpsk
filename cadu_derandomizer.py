@@ -43,17 +43,14 @@ class CaduDerandomizer(gr.basic_block):
     Input:  PDU on message port 'in' (PMT pair: (meta . u8vector))
     Output: PDU on message port 'out' (same meta, derandomized payload)
 
-    Derandomizes bytes [header_len:] by XOR with CCSDS random sequence.
+    Derandomizes bytes by XOR with CCSDS random sequence.
     The sequence restarts at the beginning for each PDU (standard behavior).
     """
 
-    def __init__(self, header_len: int = 4):
+    def __init__(self):
         gr.basic_block.__init__(self, name="cadu_derandomizer", in_sig=[], out_sig=[])
 
-        self.header_len = int(header_len)
-
         self._mask = _ccsds_random_bytes(0xff)
-
         self._in_port = pmt.intern("in")
         self._out_port = pmt.intern("out")
         self.message_port_register_in(self._in_port)
@@ -72,18 +69,9 @@ class CaduDerandomizer(gr.basic_block):
             return
 
         raw = bytes(pmt.u8vector_elements(data))
-        if len(raw) <= self.header_len:
-            # Nothing to derandomize
-            self.message_port_pub(self._out_port, msg)
-            return
-
-        header = raw[:self.header_len]
-        payload = bytearray(raw[self.header_len:])
-
-        for i in range(len(payload)):
-            payload[i] ^= self._mask[i % 0xff]
-
-        out_raw = header + payload
+        out_raw = bytearray(raw)
+        for i in range(len(out_raw)):
+            out_raw[i] ^= self._mask[i % 0xff]
 
         out_vec = pmt.init_u8vector(len(out_raw), list(out_raw))
         out_msg = pmt.cons(meta, out_vec)

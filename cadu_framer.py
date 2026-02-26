@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 #
-# cadu_framer.py - GNU Radio Python block (stream bits -> CADU PDUs)
+# cadu_framer.py - GNU Radio Python block (stream bits -> CADU bit-PDUs)
 #
 # Input:  stream of uint8 bits (0/1)
-# Output: message port 'cadu' with PMT PDU (u8vector) of length cadu_len_bytes
+# Output: message port 'cadu' with PMT PDU (u8vector) of length cadu_len_bits
 #
 import numpy as np
 from gnuradio import gr
 import pmt
 
+
 class CaduFramer(gr.basic_block):
     """
     CADU framer:
       - input: stream of bits as unsigned char (0/1)
-      - output: PDUs on message port 'cadu', each PDU is one CADU frame (cadu_len_bytes bytes)
+      - output: PDUs on message port 'cadu', each PDU is one CADU frame as UNPACKED BITS (0/1)
       - behavior: shifter-based ASM search + automatic bit inversion (ASM or ~ASM)
-      - packing: MSB-first (byte = (byte<<1)|bit), matching the reference code
+      - output format: u8vector of bits (0/1), length = cadu_len_bytes*8
+      - meta: packet_len = number of items (bits)
     """
 
     def __init__(self, cadu_len_bytes=1024, cadu_asm=0x1ACFFC1D):
@@ -36,28 +38,31 @@ class CaduFramer(gr.basic_block):
         self._in_frame = False
         self._bit_inversion = 0
         self._bit_of_frame = 0
-        self._frame_buf = bytearray(self.cadu_len_bytes)
+
+        # store bits as 0/1 (bytearray is fine)
+        self._bits = bytearray(self.cadu_size_bits)
 
         self._port = pmt.intern("cadu")
         self.message_port_register_out(self._port)
 
     def _reset_frame(self):
-        # Pre-fill with uninverted ASM bytes.
-        self._frame_buf[:] = b"\x00" * self.cadu_len_bytes
-        self._frame_buf[0] = (self.CADU_ASM >> 24) & 0xFF
-        self._frame_buf[1] = (self.CADU_ASM >> 16) & 0xFF
-        self._frame_buf[2] = (self.CADU_ASM >>  8) & 0xFF
-        self._frame_buf[3] = (self.CADU_ASM >>  0) & 0xFF
-        self._bit_of_frame = 32
+        self._bit_of_frame = 0
+        # no need to clear the whole buffer every time; we'll overwrite sequentially
 
     def _write_bit(self, b):
-        byte_i = self._bit_of_frame // 8
-        self._frame_buf[byte_i] = ((self._frame_buf[byte_i] << 1) & 0xFF) | (int(b) & 1)
+        # store unpacked bit (0 or 1)
+        self._bits[self._bit_of_frame] = int(b) & 1
         self._bit_of_frame += 1
 
     def _emit_frame(self):
-        vec = pmt.init_u8vector(self.cadu_len_bytes, list(self._frame_buf))
-        msg = pmt.cons(pmt.PMT_NIL, vec)
+        vec = pmt.init_u8vector(self.cadu_size_bits, list(self._bits))
+
+        meta = pmt.make_dict()
+        meta = pmt.dict_add(meta, pmt.intern("packet_len"), pmt.from_long(self.cadu_size_bits))
+        # opcionális: ha szeretnéd megtartani byte hossz info-t is
+        meta = pmt.dict_add(meta, pmt.intern("length_bytes"), pmt.from_long(self.cadu_len_bytes))
+
+        msg = pmt.cons(meta, vec)
         self.message_port_pub(self._port, msg)
 
     def general_work(self, input_items, output_items):

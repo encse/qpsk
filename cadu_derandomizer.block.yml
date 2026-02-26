@@ -2,12 +2,6 @@ id: cadu_derandomizer
 label: "CADU derandomizer"
 category: '[my blocks]'
 
-parameters:
-- id: header_len
-  label: Header bytes to keep
-  dtype: int
-  default: '4'
-
 inputs:
 - id: in
   label: in
@@ -20,6 +14,6 @@ outputs:
 
 templates:
   imports: 'from cadu_derandomizer import CaduDerandomizer'
-  make: "CaduDerandomizer(\n    header_len=${ header_len },\n)"
+  make: "CaduDerandomizer()"
 
 file_format: 1
