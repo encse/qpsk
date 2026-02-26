@@ -59,8 +59,6 @@ class CaduFramer(gr.basic_block):
 
         meta = pmt.make_dict()
         meta = pmt.dict_add(meta, pmt.intern("packet_len"), pmt.from_long(self.cadu_size_bits))
-        # opcionális: ha szeretnéd megtartani byte hossz info-t is
-        meta = pmt.dict_add(meta, pmt.intern("length_bytes"), pmt.from_long(self.cadu_len_bytes))
 
         msg = pmt.cons(meta, vec)
         self.message_port_pub(self._port, msg)

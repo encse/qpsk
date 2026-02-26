@@ -1,0 +1,21 @@
+id: vcdu_parser
+label: "VCDU parser"
+category: '[my blocks]'
+
+parameters: []
+
+inputs:
+- id: in
+  label: in
+  domain: message
+
+outputs:
+- id: out
+  label: out
+  domain: message
+
+templates:
+  imports: 'from vcdu_parser import VcduParser'
+  make: "VcduParser()"
+
+file_format: 1
