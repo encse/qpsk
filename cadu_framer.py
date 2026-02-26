@@ -9,7 +9,7 @@ import numpy as np
 from gnuradio import gr
 import pmt
 
-class cadu_framer(gr.basic_block):
+class CaduFramer(gr.basic_block):
     """
     CADU framer:
       - input: stream of bits as unsigned char (0/1)

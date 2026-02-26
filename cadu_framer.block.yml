@@ -24,7 +24,7 @@ outputs:
   domain: message
 
 templates:
-  imports: 'from cadu_framer import cadu_framer'
-  make: "cadu_framer(\n    cadu_len_bytes=${ cadu_len_bytes },\n    cadu_asm=${ cadu_asm },\n)"
+  imports: 'from cadu_framer import CaduFramer'
+  make: "CaduFramer(\n    cadu_len_bytes=${ cadu_len_bytes },\n    cadu_asm=${ cadu_asm },\n)"
 
 file_format: 1
