@@ -1,0 +1,37 @@
+file_format: 1
+
+id: ccsds_image_decoder
+label: CCSDS Image Decoder
+category: '[CCSDS]'
+
+templates:
+  imports: from ccsds_image_decoder import CcsdsImageDecoder
+  make: CcsdsImageDecoder(${apid})
+
+parameters:
+  - id: apid
+    label: APID
+    dtype: int
+    default: 64
+
+inputs:
+  - id: in
+    label: in
+    domain: message
+    optional: false
+
+outputs:
+  - id: out
+    label: out
+    domain: message
+    optional: false
+
+documentation: |
+  Decodes CCSDS image packets for a given APID.
+
+  Input:
+    Message port "in" expects u8vector containing a full CCSDS space packet.
+
+  Output:
+    Message port "out" emits one u8vector per decoded image row
+    (IMAGE_WIDTH pixels, uint8 grayscale).
