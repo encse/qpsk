@@ -1,0 +1,18 @@
+id: ccsds_image_sink
+label: CCSDS Image Sink
+category: '[Custom]'
+
+templates:
+  imports: from ccsds_image_sink import CcsdsImageSink
+  make: CcsdsImageSink()
+
+inputs:
+  - domain: message
+    id: in
+    optional: false
+
+outputs: []
+
+parameters: []
+
+file_format: 1

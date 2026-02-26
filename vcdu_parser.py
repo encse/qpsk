@@ -44,12 +44,12 @@ class VcduParser(gr.basic_block):
         payload = data[self.VCDU_PRIMARY_HEADER_LEN:]
 
         meta = meta_in
-        meta = pmt.dict_add(meta, pmt.intern("version_number"), pmt.from_long(version_number))
-        meta = pmt.dict_add(meta, pmt.intern("spacecraft_id"), pmt.from_long(spacecraft_id))
-        meta = pmt.dict_add(meta, pmt.intern("virtual_channel_id"), pmt.from_long(virtual_channel_id))
-        meta = pmt.dict_add(meta, pmt.intern("vcdu_counter"), pmt.from_long(vcdu_counter))
-        meta = pmt.dict_add(meta, pmt.intern("signalling_field_raw"), pmt.from_long(signalling_field))
-        meta = pmt.dict_add(meta, pmt.intern("replay_flag"), pmt.from_long(replay_flag))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.version_number"), pmt.from_long(version_number))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.spacecraft_id"), pmt.from_long(spacecraft_id))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.virtual_channel_id"), pmt.from_long(virtual_channel_id))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.vcdu_counter"), pmt.from_long(vcdu_counter))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.signalling_field_raw"), pmt.from_long(signalling_field))
+        meta = pmt.dict_add(meta, pmt.intern("vcdu.replay_flag"), pmt.from_long(replay_flag))
 
         vec = pmt.init_u8vector(len(payload), list(payload))
         self.message_port_pub(pmt.intern("out"), pmt.cons(meta, vec))

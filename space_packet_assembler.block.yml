@@ -1,0 +1,21 @@
+id: space_packet_assembler
+label: "Space Packet assembler"
+category: '[my blocks]'
+
+parameters: []
+
+inputs:
+- id: in
+  label: in
+  domain: message
+
+outputs:
+- id: out
+  label: out
+  domain: message
+
+templates:
+  imports: 'from space_packet_assembler import SpacePacketAssembler'
+  make: "SpacePacketAssembler()"
+
+file_format: 1

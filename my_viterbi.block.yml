@@ -1,0 +1,34 @@
+id: my_viterbi
+label: my_viterbi
+category: '[GRC Hier Blocks]'
+
+parameters:
+-   id: code
+    label: code
+    dtype: string
+    default: '"CCSDS uninverted"'
+    hide: none
+
+inputs:
+-   label: in
+    dtype: float
+    vlen: 1
+
+outputs:
+-   label: out
+    dtype: byte
+    vlen: 1
+-   label: ber
+    dtype: float
+    vlen: 1
+
+templates:
+    imports: 'from my_viterbi import my_viterbi  # grc-generated hier_block'
+    make: "my_viterbi(\n    code=${ code },\n)"
+    callbacks:
+    - set_code(${ code })
+
+documentation: /Users/encse/.local/state/gnuradio/my_viterbi.py
+grc_source: /Users/encse/projects/qpsk/my_viterbi.grc
+
+file_format: 1

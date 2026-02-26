@@ -1,0 +1,25 @@
+id: take_n
+label: "Take N (PDU)"
+category: '[my blocks]'
+
+parameters:
+- id: n
+  label: N
+  dtype: int
+  default: '1'
+
+inputs:
+- id: in
+  label: in
+  domain: message
+
+outputs:
+- id: out
+  label: out
+  domain: message
+
+templates:
+  imports: 'from take_n import TakeN'
+  make: "TakeN(\n    n=${ n },\n)"
+
+file_format: 1
