@@ -113,10 +113,10 @@ class ber_ccsds_soft_decoded(gr.basic_block):
 
 
 
-class my_viterbi(gr.hier_block2):
+class Viterbi(gr.hier_block2):
     def __init__(self, code="CCSDS uninverted"):
         gr.hier_block2.__init__(
-            self, "my_viterbi",
+            self, "viterbi",
             gr.io_signature(1, 1, gr.sizeof_float),
             gr.io_signature(2, 2, [gr.sizeof_char, gr.sizeof_float]),
         )

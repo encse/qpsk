@@ -1,5 +1,5 @@
-id: my_viterbi
-label: my_viterbi
+id: viterbi
+label: Viterbi decoder
 category: '[GRC Hier Blocks]'
 
 parameters:
@@ -23,12 +23,9 @@ outputs:
     vlen: 1
 
 templates:
-    imports: 'from my_viterbi import my_viterbi  # grc-generated hier_block'
-    make: "my_viterbi(\n    code=${ code },\n)"
+    imports: 'from viterbi import Viterbi  # grc-generated hier_block'
+    make: "Viterbi(\n    code=${ code },\n)"
     callbacks:
     - set_code(${ code })
-
-documentation: /Users/encse/.local/state/gnuradio/my_viterbi.py
-grc_source: /Users/encse/projects/qpsk/my_viterbi.grc
 
 file_format: 1

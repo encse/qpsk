@@ -123,7 +123,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 168.0]
+    coordinate: [488, 208.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0
@@ -139,7 +139,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 596.0]
+    coordinate: [392, 556.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0_0
@@ -197,7 +197,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [48, 168.0]
+    coordinate: [32, 208.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_complex_0_0
@@ -232,7 +232,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [552, 596.0]
+    coordinate: [544, 556.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0_1
@@ -250,7 +250,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 612.0]
+    coordinate: [192, 572.0]
     rotation: 0
     state: enabled
 - name: cadu_framer_0
@@ -267,7 +267,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 744.0]
+    coordinate: [528, 664.0]
     rotation: 0
     state: enabled
 - name: ccsds_image_decoder_0
@@ -283,7 +283,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 932.0]
+    coordinate: [496, 828.0]
     rotation: 0
     state: enabled
 - name: ccsds_image_viewer_0
@@ -298,7 +298,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [696, 928.0]
+    coordinate: [688, 824.0]
     rotation: 0
     state: enabled
 - name: digital_clock_recovery_mm_xx_0
@@ -354,7 +354,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 744.0]
+    coordinate: [376, 664.0]
     rotation: 0
     state: enabled
 - name: fir_filter_xxx_1
@@ -402,8 +402,8 @@ blocks:
     coordinate: [200, 16.0]
     rotation: 0
     state: enabled
-- name: my_viterbi_0
-  id: my_viterbi
+- name: viterbi_0
+  id: viterbi
   parameters:
     affinity: ''
     alias: ''
@@ -415,7 +415,20 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 748.0]
+    coordinate: [192, 668.0]
+    rotation: 0
+    state: enabled
+- name: note_0
+  id: note
+  parameters:
+    alias: ''
+    comment: METEOR M 2-X 72k, oqpsk demodulator and image viewer
+    note: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [32, 104.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0_0_0_0
@@ -570,7 +583,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 808.0]
+    coordinate: [376, 728.0]
     rotation: 0
     state: enabled
 - name: rational_resampler_xxx_0
@@ -592,7 +605,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [240, 176.0]
+    coordinate: [224, 216.0]
     rotation: 0
     state: enabled
 - name: satellites_ccsds_descrambler_0
@@ -607,7 +620,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [720, 748.0]
+    coordinate: [712, 668.0]
     rotation: 0
     state: enabled
 - name: satellites_decode_rs_ccsds_0
@@ -624,7 +637,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [880, 744.0]
+    coordinate: [872, 664.0]
     rotation: 0
     state: enabled
 - name: space_packet_assembler_0
@@ -639,7 +652,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [320, 932.0]
+    coordinate: [312, 828.0]
     rotation: 0
     state: enabled
 - name: vcdu_parser_0
@@ -654,7 +667,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 932.0]
+    coordinate: [168, 828.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1
@@ -667,7 +680,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [656, 188.0]
+    coordinate: [640, 228.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1_0
@@ -693,7 +706,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [680, 612.0]
+    coordinate: [672, 572.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1_0_0_0
@@ -706,7 +719,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1088, 748.0]
+    coordinate: [1080, 668.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -732,7 +745,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 612.0]
+    coordinate: [24, 572.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0_0_0
@@ -745,7 +758,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 764.0]
+    coordinate: [24, 684.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0_0_0_0
@@ -758,7 +771,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 932.0]
+    coordinate: [24, 828.0]
     rotation: 0
     state: enabled
 
@@ -780,8 +793,8 @@ connections:
 - [digital_costas_loop_cc_0, '0', blocks_complex_to_float_0_0, '0']
 - [digital_diff_decoder_bb_0, '0', cadu_framer_0, '0']
 - [fir_filter_xxx_1, '0', digital_costas_loop_cc_0, '0']
-- [my_viterbi_0, '0', digital_diff_decoder_bb_0, '0']
-- [my_viterbi_0, '1', qtgui_number_sink_0, '0']
+- [viterbi_0, '0', digital_diff_decoder_bb_0, '0']
+- [viterbi_0, '1', qtgui_number_sink_0, '0']
 - [rational_resampler_xxx_0, '0', analog_agc2_xx_0, '0']
 - [satellites_ccsds_descrambler_0, out, satellites_decode_rs_ccsds_0, in]
 - [satellites_decode_rs_ccsds_0, out, virtual_sink_0_1_0_0_0, '0']
@@ -789,7 +802,7 @@ connections:
 - [vcdu_parser_0, out, space_packet_assembler_0, in]
 - [virtual_source_0, '0', fir_filter_xxx_1, '0']
 - [virtual_source_0_0, '0', blocks_multiply_const_vxx_0_1, '0']
-- [virtual_source_0_0_0, '0', my_viterbi_0, '0']
+- [virtual_source_0_0_0, '0', viterbi_0, '0']
 - [virtual_source_0_0_0_0, '0', vcdu_parser_0, in]
 
 metadata:
