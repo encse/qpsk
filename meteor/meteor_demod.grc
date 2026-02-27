@@ -1,17 +1,29 @@
 options:
   parameters:
-    author: ''
+    author: HA7NCS
     catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
-    comment: ''
-    copyright: ''
-    description: ''
+    comment: 'Meteor M-N2 LRPT (72k) QPSK demodulator.
+
+
+      Accepts complex float32 (cf32) IQ input, nominal sample rate 250 kHz
+
+      (adjustable). Demonstrates the complete LRPT demodulation pipeline using
+
+      gr-satellites blocks together with custom GRC blocks.
+
+
+      Includes carrier and timing recovery, differential decoding, CCSDS
+
+      deframing, and grayscale image reconstruction from selected LRPT APIDs.'
+    copyright: Copyright (c) 2026 David Nemeth-Csoka
+    description: Meteor M-N2 LRPT (72k) QPSK demodulator.
     gen_cmake: 'On'
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: untitled
+    id: meteor_demod
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -22,7 +34,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: Not titled yet
+    title: Meteor M N 2-x ,72k LRPT demodulator
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -33,43 +45,32 @@ options:
     state: enabled
 
 blocks:
-- name: pll_loop_bw
+- name: apid_to_decode
   id: variable
   parameters:
-    comment: ''
-    value: '0.002'
+    comment: "depending on the available image channels in the input this can be \n\
+      \n64, 65, ...  69"
+    value: '65'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [688, 16.0]
+    coordinate: [184, 344.0]
     rotation: 0
     state: enabled
-- name: rrc_alpha
+- name: input_sample_rate
   id: variable
   parameters:
-    comment: ''
-    value: '0.5'
+    comment: set this to the sample rate of your input
+    value: '256000'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [616, 16.0]
+    coordinate: [32, 344.0]
     rotation: 0
     state: enabled
-- name: rrc_taps
-  id: variable
-  parameters:
-    comment: ''
-    value: '31'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [552, 16.0]
-    rotation: 0
-    state: enabled
-- name: samp_rate
+- name: pipeline_sample_rate
   id: variable
   parameters:
     comment: ''
@@ -78,7 +79,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [368, 16.0]
+    coordinate: [688, 16.0]
     rotation: 0
     state: enabled
 - name: sps
@@ -90,7 +91,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 16.0]
+    coordinate: [864, 16.0]
     rotation: 0
     state: enabled
 - name: sym_rate
@@ -102,7 +103,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 16.0]
+    coordinate: [800, 16.0]
     rotation: 0
     state: enabled
 - name: analog_agc2_xx_0
@@ -123,7 +124,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [488, 208.0]
+    coordinate: [168, 600.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0
@@ -139,7 +140,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [392, 556.0]
+    coordinate: [392, 860.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0_0
@@ -155,7 +156,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [528, 372.0]
+    coordinate: [656, 572.0]
     rotation: 0
     state: enabled
 - name: blocks_delay_0_0
@@ -175,7 +176,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [656, 404.0]
+    coordinate: [784, 604.0]
     rotation: 0
     state: enabled
 - name: blocks_file_source_0
@@ -197,7 +198,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 208.0]
+    coordinate: [32, 240.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_complex_0_0
@@ -213,7 +214,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [744, 372.0]
+    coordinate: [872, 572.0]
     rotation: 0
     state: enabled
 - name: blocks_interleave_0
@@ -232,7 +233,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [544, 556.0]
+    coordinate: [544, 860.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0_1
@@ -250,7 +251,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [192, 572.0]
+    coordinate: [192, 876.0]
     rotation: 0
     state: enabled
 - name: cadu_framer_0
@@ -267,7 +268,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [528, 664.0]
+    coordinate: [528, 1088.0]
     rotation: 0
     state: enabled
 - name: ccsds_image_decoder_0
@@ -275,7 +276,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    apid: '65'
+    apid: apid_to_decode
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -283,7 +284,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 828.0]
+    coordinate: [504, 1372.0]
     rotation: 0
     state: enabled
 - name: ccsds_image_viewer_0
@@ -292,13 +293,13 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    gui_hint: 0,1,3,1
+    gui_hint: 0,1,4,1
     width: '1568'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [688, 824.0]
+    coordinate: [696, 1368.0]
     rotation: 0
     state: enabled
 - name: digital_clock_recovery_mm_xx_0
@@ -319,7 +320,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [896, 368.0]
+    coordinate: [1024, 568.0]
     rotation: 0
     state: enabled
 - name: digital_costas_loop_cc_0
@@ -332,12 +333,12 @@ blocks:
     minoutbuf: '0'
     order: '4'
     use_snr: 'False'
-    w: pll_loop_bw
+    w: '0.002'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [344, 388.0]
+    coordinate: [472, 588.0]
     rotation: 0
     state: enabled
 - name: digital_diff_decoder_bb_0
@@ -354,7 +355,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [376, 664.0]
+    coordinate: [376, 1088.0]
     rotation: 0
     state: enabled
 - name: fir_filter_xxx_1
@@ -367,13 +368,14 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_delay: '0'
-    taps: firdes.root_raised_cosine(1.0, samp_rate, sym_rate, rrc_alpha, rrc_taps)
+    taps: firdes.root_raised_cosine(1.0, pipeline_sample_rate, sym_rate, alpha=0.5,
+      ntaps=31)
     type: ccc
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 416.0]
+    coordinate: [304, 616.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -386,7 +388,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [136, 16.0]
+    coordinate: [200, 16.0]
     rotation: 0
     state: enabled
 - name: import_1
@@ -399,36 +401,69 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 16.0]
-    rotation: 0
-    state: enabled
-- name: viterbi_0
-  id: viterbi
-  parameters:
-    affinity: ''
-    alias: ''
-    code: '"NASA-DSN uninverted"'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [192, 668.0]
+    coordinate: [280, 16.0]
     rotation: 0
     state: enabled
 - name: note_0
   id: note
   parameters:
     alias: ''
-    comment: METEOR M 2-X 72k, oqpsk demodulator and image viewer
-    note: ''
+    comment: 'Parameters copied from Satdump
+
+
+      This stage is responsible for generating the constellation diagram'
+    note: Symbol recovery
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 104.0]
+    coordinate: [32, 512.0]
+    rotation: 0
+    state: enabled
+- name: note_0_0
+  id: note
+  parameters:
+    alias: ''
+    comment: "If you dont get a proper BER value (0.0x) in the following stages, \n\
+      the constellation might not stabilized in the proper angle, or your IQ stream\n\
+      is swapped. You can change the multipier block or the inputs of the interleave\n\
+      block to fix that."
+    note: Rotate and swap
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [24, 776.0]
+    rotation: 0
+    state: enabled
+- name: note_0_0_0
+  id: note
+  parameters:
+    alias: ''
+    comment: "We convert the soft symbols of previous stages to hard 0,1 bits and\
+      \ aim to \nfind CADU frames in the input."
+    note: Cadu stage
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [24, 1008.0]
+    rotation: 0
+    state: enabled
+- name: note_0_0_0_0
+  id: note
+  parameters:
+    alias: ''
+    comment: 'Extract space packets from the incoming cadu frames, select the APID
+      channel
+
+      we are interested in and try to convert it to an image.'
+    note: Image recovery
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [32, 1288.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0_0_0_0
@@ -460,7 +495,7 @@ blocks:
     color9: '"dark green"'
     comment: ''
     grid: 'False'
-    gui_hint: 0,0,1,1
+    gui_hint: 0,0,2,1
     label1: ''
     label10: ''
     label2: ''
@@ -520,7 +555,88 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1064, 412.0]
+    coordinate: [1192, 612.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_freq_sink_x_0
+  id: qtgui_freq_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    average: '1.0'
+    axislabels: 'True'
+    bw: pipeline_sample_rate
+    color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
+    ctrlpanel: 'False'
+    fc: '0'
+    fftsize: '1024'
+    freqhalf: 'True'
+    grid: 'False'
+    gui_hint: 3,0,1,1
+    label: Relative Gain
+    label1: ''
+    label10: ''''''
+    label2: ''''''
+    label3: ''''''
+    label4: ''''''
+    label5: ''''''
+    label6: ''''''
+    label7: ''''''
+    label8: ''''''
+    label9: ''''''
+    legend: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: '""'
+    nconnections: '1'
+    norm_window: 'False'
+    showports: 'False'
+    tr_chan: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_tag: '""'
+    type: complex
+    units: dB
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    wintype: window.WIN_BLACKMAN_hARRIS
+    ymax: '10'
+    ymin: '-140'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [408, 228.0]
     rotation: 0
     state: enabled
 - name: qtgui_number_sink_0
@@ -552,7 +668,7 @@ blocks:
     factor8: '1'
     factor9: '1'
     graph_type: qtgui.NUM_GRAPH_NONE
-    gui_hint: 1,0,1,1
+    gui_hint: 2,0,1,1
     label1: BER
     label10: ''
     label2: ''
@@ -583,7 +699,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [376, 728.0]
+    coordinate: [376, 1152.0]
     rotation: 0
     state: enabled
 - name: rational_resampler_xxx_0
@@ -591,12 +707,10 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: "adjust  interpolation and decimation so that \n\nthe input's sample\
-      \ rate * interpolation / decimation == 72k\n\nfor example\n\n250m * 5 / 9 =\
-      \ 72k"
-    decim: '16'
+    comment: ''
+    decim: int(input_sample_rate)
     fbw: '0'
-    interp: '9'
+    interp: pipeline_sample_rate
     maxoutbuf: '0'
     minoutbuf: '0'
     taps: '[]'
@@ -605,7 +719,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [224, 216.0]
+    coordinate: [224, 248.0]
     rotation: 0
     state: enabled
 - name: satellites_ccsds_descrambler_0
@@ -620,7 +734,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [712, 668.0]
+    coordinate: [712, 1092.0]
     rotation: 0
     state: enabled
 - name: satellites_decode_rs_ccsds_0
@@ -637,7 +751,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [872, 664.0]
+    coordinate: [872, 1088.0]
     rotation: 0
     state: enabled
 - name: space_packet_assembler_0
@@ -652,7 +766,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 828.0]
+    coordinate: [320, 1372.0]
     rotation: 0
     state: enabled
 - name: vcdu_parser_0
@@ -667,7 +781,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [168, 828.0]
+    coordinate: [176, 1372.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1
@@ -680,7 +794,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 228.0]
+    coordinate: [408, 308.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1_0
@@ -693,7 +807,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1064, 356.0]
+    coordinate: [1192, 548.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1_0_0
@@ -706,7 +820,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [672, 572.0]
+    coordinate: [672, 876.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0_1_0_0_0
@@ -719,7 +833,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 668.0]
+    coordinate: [1080, 1092.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -732,7 +846,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 420.0]
+    coordinate: [32, 620.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0_0
@@ -745,7 +859,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 572.0]
+    coordinate: [24, 876.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0_0_0
@@ -758,7 +872,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 684.0]
+    coordinate: [24, 1108.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0_0_0_0
@@ -771,12 +885,28 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 828.0]
+    coordinate: [32, 1372.0]
+    rotation: 0
+    state: enabled
+- name: viterbi_0
+  id: viterbi
+  parameters:
+    affinity: ''
+    alias: ''
+    code: '"NASA-DSN uninverted"'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [192, 1092.0]
     rotation: 0
     state: enabled
 
 connections:
-- [analog_agc2_xx_0, '0', virtual_sink_0_1, '0']
+- [analog_agc2_xx_0, '0', fir_filter_xxx_1, '0']
 - [blocks_complex_to_float_0, '0', blocks_interleave_0, '0']
 - [blocks_complex_to_float_0, '1', blocks_interleave_0, '1']
 - [blocks_complex_to_float_0_0, '0', blocks_float_to_complex_0_0, '0']
@@ -793,17 +923,18 @@ connections:
 - [digital_costas_loop_cc_0, '0', blocks_complex_to_float_0_0, '0']
 - [digital_diff_decoder_bb_0, '0', cadu_framer_0, '0']
 - [fir_filter_xxx_1, '0', digital_costas_loop_cc_0, '0']
-- [viterbi_0, '0', digital_diff_decoder_bb_0, '0']
-- [viterbi_0, '1', qtgui_number_sink_0, '0']
-- [rational_resampler_xxx_0, '0', analog_agc2_xx_0, '0']
+- [rational_resampler_xxx_0, '0', qtgui_freq_sink_x_0, '0']
+- [rational_resampler_xxx_0, '0', virtual_sink_0_1, '0']
 - [satellites_ccsds_descrambler_0, out, satellites_decode_rs_ccsds_0, in]
 - [satellites_decode_rs_ccsds_0, out, virtual_sink_0_1_0_0_0, '0']
 - [space_packet_assembler_0, out, ccsds_image_decoder_0, in]
 - [vcdu_parser_0, out, space_packet_assembler_0, in]
-- [virtual_source_0, '0', fir_filter_xxx_1, '0']
+- [virtual_source_0, '0', analog_agc2_xx_0, '0']
 - [virtual_source_0_0, '0', blocks_multiply_const_vxx_0_1, '0']
 - [virtual_source_0_0_0, '0', viterbi_0, '0']
 - [virtual_source_0_0_0_0, '0', vcdu_parser_0, in]
+- [viterbi_0, '0', digital_diff_decoder_bb_0, '0']
+- [viterbi_0, '1', qtgui_number_sink_0, '0']
 
 metadata:
   file_format: 1

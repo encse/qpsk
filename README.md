@@ -1,0 +1,1 @@
+GRC_BLOCKS_PATH=. gnuradio-companion
