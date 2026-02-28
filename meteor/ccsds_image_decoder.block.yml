@@ -6,13 +6,7 @@ category: '[CCSDS]'
 
 templates:
   imports: from ccsds_image_decoder import CcsdsImageDecoder
-  make: CcsdsImageDecoder(${apid})
-
-parameters:
-  - id: apid
-    label: APID
-    dtype: int
-    default: 64
+  make: CcsdsImageDecoder()
 
 inputs:
   - id: in

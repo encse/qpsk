@@ -38,7 +38,7 @@ class SpacePacketAssembler(gr.basic_block):
         sequence_flag = (data[2] >> 6) & 0x03
         packet_sequence_count = ((data[2] & 0x3F) << 8) | data[3]
 
-        packet_length = ((data[4] << 8) | data[5]) + 1  # as in your reference
+        packet_length = ((data[4] << 8) | data[5]) + 1
 
         header = {
             "version": version,
@@ -51,15 +51,15 @@ class SpacePacketAssembler(gr.basic_block):
         }
         return header
 
-    def _emit_space_packet(self, meta_in, payload_bytes):
+    def _emit_space_packet(self, meta_in, header, payload_bytes):
         meta = meta_in
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.ccsds_version"), pmt.from_long(header["version"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.ccsds_type"), pmt.from_long(header["type"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.secondary_header_flag"), pmt.from_long(header["secondary_header_flag"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.apid"), pmt.from_long(header["apid"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.sequence_flag"), pmt.from_long(header["sequence_flag"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.packet_sequence_count"), pmt.from_long(header["packet_sequence_count"]))
-        # meta = pmt.dict_add(meta, pmt.intern("space_packet.packet_length"), pmt.from_long(header["packet_length"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.ccsds_version"), pmt.from_long(header["version"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.ccsds_type"), pmt.from_long(header["type"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.secondary_header_flag"), pmt.from_long(header["secondary_header_flag"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.apid"), pmt.from_long(header["apid"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.sequence_flag"), pmt.from_long(header["sequence_flag"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.packet_sequence_count"), pmt.from_long(header["packet_sequence_count"]))
+        meta = pmt.dict_add(meta, pmt.intern("space_packet.packet_length"), pmt.from_long(header["packet_length"]))
 
         vec = pmt.init_u8vector(len(payload_bytes), list(payload_bytes))
         self.message_port_pub(pmt.intern("out"), pmt.cons(meta, vec))
@@ -88,8 +88,8 @@ class SpacePacketAssembler(gr.basic_block):
                         header = self._parse_space_packet_header(self._partial)
                         full_packet_len = self.SPACE_PACKET_HEADER_LEN + header["packet_length"]
                         if len(self._partial) >= full_packet_len:
-                            pkt_payload = self._partial[:full_packet_len]
-                            self._emit_space_packet(meta_in, pkt_payload)
+                            pkt_payload = self._partial[self.SPACE_PACKET_HEADER_LEN:full_packet_len]
+                            self._emit_space_packet(meta_in, header, pkt_payload)
                     except Exception as e:
                         self.logger.error(f"Failed to parse/emit partial space packet: {e}")
 
@@ -108,8 +108,8 @@ class SpacePacketAssembler(gr.basic_block):
             full_packet_len = self.SPACE_PACKET_HEADER_LEN + header["packet_length"]
 
             if len(payload) >= full_packet_len:
-                pkt_payload = payload[:full_packet_len]
-                self._emit_space_packet(meta_in, pkt_payload)
+                pkt_payload = payload[self.SPACE_PACKET_HEADER_LEN:full_packet_len]
+                self._emit_space_packet(meta_in, header, pkt_payload)
                 payload = payload[full_packet_len:]
             else:
                 # Not enough: store as partial

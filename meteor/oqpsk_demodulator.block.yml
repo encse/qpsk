@@ -1,0 +1,35 @@
+id: oqpsk_demodulator
+label: OQPSK Demodulator
+category: '[Meteor]'
+
+parameters:
+-   id: sample_rate
+    label: sample_rate
+    dtype: int
+    default: '0'
+    hide: none
+
+inputs:
+-   label: in
+    dtype: complex
+    vlen: 1
+
+outputs:
+-   label: constellation
+    dtype: complex
+    vlen: 1
+    optional: true
+-   label: soft_symbols
+    dtype: float
+    vlen: 1
+
+templates:
+    imports: 'from oqpsk_demodulator import oqpsk_demodulator  # grc-generated hier_block'
+    make: "oqpsk_demodulator(\n    sample_rate=${ sample_rate },\n)"
+    callbacks:
+    - set_sample_rate(${ sample_rate })
+
+documentation: ./oqpsk_demodulator.py
+grc_source: /Users/encse/projects/qpsk/meteor/oqpsk_demodulator.grc
+
+file_format: 1

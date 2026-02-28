@@ -1,0 +1,25 @@
+id: ccsds_apid_filter
+label: APID Filter (PDU)
+category: '[Meteor]'
+
+templates:
+  imports: |-
+    from apid_filter import ApidFilter
+  make: |-
+    ApidFilter(apid=${apid})
+
+parameters:
+  - id: apid
+    label: APID
+    dtype: int
+    default: 65
+
+inputs:
+  - domain: message
+    id: in
+
+outputs:
+  - domain: message
+    id: out
+
+file_format: 1

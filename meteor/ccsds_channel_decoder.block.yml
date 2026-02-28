@@ -1,0 +1,30 @@
+id: ccsds_channel_decoder
+label: CCSDS Channel Decoder
+category: '[Meteor]'
+
+parameters: []
+
+inputs:
+-   label: soft_symbols
+    dtype: float
+    vlen: 1
+
+outputs:
+-   label: BER
+    dtype: float
+    vlen: 1
+    optional: true
+-   label: cadus
+    domain: message
+    dtype: message
+
+templates:
+    imports: 'from ccsds_channel_decoder import ccsds_channel_decoder  # grc-generated
+        hier_block'
+    make: ccsds_channel_decoder()
+    callbacks: []
+
+documentation: ./ccsds_channel_decoder.py
+grc_source: /Users/encse/projects/qpsk/meteor/ccsds_channel_decoder.grc
+
+file_format: 1

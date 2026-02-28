@@ -50,29 +50,20 @@ def get_state_directory() -> str:
 
 sys.path.append(os.environ.get('GRC_HIER_PATH', get_state_directory()))
 
-from cadu_framer import CaduFramer
 from ccsds_image_decoder import CcsdsImageDecoder
 from ccsds_image_viewer import CcsdsImageViewer
 from PyQt5 import Qt, sip
-from gnuradio import analog
 from gnuradio import blocks
 import pmt
-from gnuradio import digital
-from gnuradio import filter
-from gnuradio.filter import firdes
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from space_packet_assembler import SpacePacketAssembler
-from vcdu_parser import VcduParser
-from viterbi import Viterbi  # grc-generated hier_block
-import math
-import satellites
-import satellites.hier
+from meteor_lrpt import meteor_lrpt  # grc-generated hier_block
 import sip
 import threading
 
@@ -112,30 +103,9 @@ class meteor_demod(gr.top_block, Qt.QWidget):
         self.flowgraph_started = threading.Event()
 
         ##################################################
-        # Variables
-        ##################################################
-        self.sym_rate = sym_rate = 72000
-        self.sps = sps = 2
-        self.pipeline_sample_rate = pipeline_sample_rate = sym_rate * sps
-        self.input_sample_rate = input_sample_rate = 256000
-        self.apid_to_decode = apid_to_decode = 65
-
-        ##################################################
         # Blocks
         ##################################################
 
-        self.viterbi_0 = Viterbi(
-            code="NASA-DSN uninverted",
-        )
-        self.vcdu_parser_0 = VcduParser()
-        self.space_packet_assembler_0 = SpacePacketAssembler()
-        self.satellites_decode_rs_ccsds_0 = satellites.decode_rs(False, 4)
-        self.satellites_ccsds_descrambler_0 = satellites.hier.ccsds_descrambler()
-        self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
-                interpolation=pipeline_sample_rate,
-                decimation=int(input_sample_rate),
-                taps=[],
-                fractional_bw=0)
         self.qtgui_number_sink_0 = qtgui.number_sink(
             gr.sizeof_float,
             0,
@@ -175,9 +145,9 @@ class meteor_demod(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
-            window.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_RECTANGULAR, #wintype
             0, #fc
-            pipeline_sample_rate, #bw
+            256000, #bw
             "", #name
             1,
             None # parent
@@ -265,11 +235,9 @@ class meteor_demod(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 1):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.fir_filter_xxx_1 = filter.fir_filter_ccc(1, firdes.root_raised_cosine(1.0, pipeline_sample_rate, sym_rate, alpha=0.5, ntaps=31))
-        self.fir_filter_xxx_1.declare_sample_delay(0)
-        self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(2, digital.DIFF_DIFFERENTIAL)
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(0.002, 4, False)
-        self.digital_clock_recovery_mm_xx_0 = digital.clock_recovery_mm_cc(sps, (0.25 * 0.0087 * 0.0087), 0.5, 0.0087, 0.005)
+        self.meteor_lrpt_0 = meteor_lrpt(
+            sample_rate=256000,
+        )
         self.ccsds_image_viewer_0 = self.ccsds_image_viewer_0 = CcsdsImageViewer(1568)
         self._ccsds_image_viewer_0_win = sip.wrapinstance(self.ccsds_image_viewer_0.qwidget(), Qt.QWidget)
         self.top_grid_layout.addWidget(self._ccsds_image_viewer_0_win, 0, 1, 4, 1)
@@ -277,50 +245,20 @@ class meteor_demod(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(1, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.ccsds_image_decoder_0 = CcsdsImageDecoder(apid_to_decode)
-        self.cadu_framer_0 = CaduFramer(
-            cadu_len_bytes=1020,
-            cadu_asm=0x1ACFFC1D,
-        )
-        self.blocks_multiply_const_vxx_0_1 = blocks.multiply_const_cc(1)
-        self.blocks_interleave_0 = blocks.interleave(gr.sizeof_float*1, 1)
-        self.blocks_float_to_complex_0_0 = blocks.float_to_complex(1)
+        self.ccsds_image_decoder_0 = CcsdsImageDecoder()
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/Users/encse/projects/qpsk/2026-02-13_07-39-09_256000SPS_137900000Hz.cf32', False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
-        self.blocks_delay_0_0 = blocks.delay(gr.sizeof_float*1, (sps // 2))
-        self.blocks_complex_to_float_0_0 = blocks.complex_to_float(1)
-        self.blocks_complex_to_float_0 = blocks.complex_to_float(1)
-        self.analog_agc2_xx_0 = analog.agc2_cc((1e-1), (1e-2), 1.0, 1.0, 65536)
 
 
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.cadu_framer_0, 'cadu'), (self.satellites_ccsds_descrambler_0, 'in'))
         self.msg_connect((self.ccsds_image_decoder_0, 'out'), (self.ccsds_image_viewer_0, 'in'))
-        self.msg_connect((self.satellites_ccsds_descrambler_0, 'out'), (self.satellites_decode_rs_ccsds_0, 'in'))
-        self.msg_connect((self.satellites_decode_rs_ccsds_0, 'out'), (self.vcdu_parser_0, 'in'))
-        self.msg_connect((self.space_packet_assembler_0, 'out'), (self.ccsds_image_decoder_0, 'in'))
-        self.msg_connect((self.vcdu_parser_0, 'out'), (self.space_packet_assembler_0, 'in'))
-        self.connect((self.analog_agc2_xx_0, 0), (self.fir_filter_xxx_1, 0))
-        self.connect((self.blocks_complex_to_float_0, 0), (self.blocks_interleave_0, 0))
-        self.connect((self.blocks_complex_to_float_0, 1), (self.blocks_interleave_0, 1))
-        self.connect((self.blocks_complex_to_float_0_0, 1), (self.blocks_delay_0_0, 0))
-        self.connect((self.blocks_complex_to_float_0_0, 0), (self.blocks_float_to_complex_0_0, 0))
-        self.connect((self.blocks_delay_0_0, 0), (self.blocks_float_to_complex_0_0, 1))
-        self.connect((self.blocks_file_source_0, 0), (self.rational_resampler_xxx_0, 0))
-        self.connect((self.blocks_float_to_complex_0_0, 0), (self.digital_clock_recovery_mm_xx_0, 0))
-        self.connect((self.blocks_interleave_0, 0), (self.viterbi_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_0_1, 0), (self.blocks_complex_to_float_0, 0))
-        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.blocks_multiply_const_vxx_0_1, 0))
-        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.qtgui_const_sink_x_0_0_0_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_complex_to_float_0_0, 0))
-        self.connect((self.digital_diff_decoder_bb_0, 0), (self.cadu_framer_0, 0))
-        self.connect((self.fir_filter_xxx_1, 0), (self.digital_costas_loop_cc_0, 0))
-        self.connect((self.rational_resampler_xxx_0, 0), (self.analog_agc2_xx_0, 0))
-        self.connect((self.rational_resampler_xxx_0, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.viterbi_0, 0), (self.digital_diff_decoder_bb_0, 0))
-        self.connect((self.viterbi_0, 1), (self.qtgui_number_sink_0, 0))
+        self.msg_connect((self.meteor_lrpt_0, 'msu_mr_1'), (self.ccsds_image_decoder_0, 'in'))
+        self.connect((self.blocks_file_source_0, 0), (self.meteor_lrpt_0, 0))
+        self.connect((self.blocks_file_source_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.meteor_lrpt_0, 0), (self.qtgui_const_sink_x_0_0_0_0, 0))
+        self.connect((self.meteor_lrpt_0, 1), (self.qtgui_number_sink_0, 0))
 
 
     def closeEvent(self, event):
@@ -330,43 +268,6 @@ class meteor_demod(gr.top_block, Qt.QWidget):
         self.wait()
 
         event.accept()
-
-    def get_sym_rate(self):
-        return self.sym_rate
-
-    def set_sym_rate(self, sym_rate):
-        self.sym_rate = sym_rate
-        self.set_pipeline_sample_rate(self.sym_rate * self.sps)
-        self.fir_filter_xxx_1.set_taps(firdes.root_raised_cosine(1.0, self.pipeline_sample_rate, self.sym_rate, alpha=0.5, ntaps=31))
-
-    def get_sps(self):
-        return self.sps
-
-    def set_sps(self, sps):
-        self.sps = sps
-        self.set_pipeline_sample_rate(self.sym_rate * self.sps)
-        self.blocks_delay_0_0.set_dly(int((self.sps // 2)))
-        self.digital_clock_recovery_mm_xx_0.set_omega(self.sps)
-
-    def get_pipeline_sample_rate(self):
-        return self.pipeline_sample_rate
-
-    def set_pipeline_sample_rate(self, pipeline_sample_rate):
-        self.pipeline_sample_rate = pipeline_sample_rate
-        self.fir_filter_xxx_1.set_taps(firdes.root_raised_cosine(1.0, self.pipeline_sample_rate, self.sym_rate, alpha=0.5, ntaps=31))
-        self.qtgui_freq_sink_x_0.set_frequency_range(0, self.pipeline_sample_rate)
-
-    def get_input_sample_rate(self):
-        return self.input_sample_rate
-
-    def set_input_sample_rate(self, input_sample_rate):
-        self.input_sample_rate = input_sample_rate
-
-    def get_apid_to_decode(self):
-        return self.apid_to_decode
-
-    def set_apid_to_decode(self, apid_to_decode):
-        self.apid_to_decode = apid_to_decode
 
 
 

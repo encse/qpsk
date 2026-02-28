@@ -1,0 +1,64 @@
+id: meteor_lrpt
+label: Meteor LRPT
+category: '[Meteor]'
+
+parameters:
+-   id: sample_rate
+    label: sample_rate
+    dtype: int
+    default: '0'
+    hide: none
+
+inputs:
+-   label: input
+    dtype: complex
+    vlen: 1
+
+outputs:
+-   label: msu_mr_1
+    domain: message
+    dtype: message
+    optional: true
+-   label: msu_mr_2
+    domain: message
+    dtype: message
+    optional: true
+-   label: msu_mr_3
+    domain: message
+    dtype: message
+    optional: true
+-   label: msu_mr_4
+    domain: message
+    dtype: message
+    optional: true
+-   label: msu_mr_5
+    domain: message
+    dtype: message
+    optional: true
+-   label: msu_mr_6
+    domain: message
+    dtype: message
+    optional: true
+-   label: telemetry
+    domain: message
+    dtype: message
+    optional: true
+-   label: constellation
+    dtype: complex
+    vlen: 1
+    optional: true
+-   label: BER
+    dtype: float
+    vlen: 1
+    optional: true
+
+templates:
+    imports: 'from meteor_lrpt import meteor_lrpt  # grc-generated hier_block'
+    make: "meteor_lrpt(\n    sample_rate=${ sample_rate },\n)"
+    callbacks:
+    - set_sample_rate(${ sample_rate })
+
+documentation: ./meteor_lrpt.py
+grc_source: /Users/encse/projects/qpsk/meteor/meteor_lrpt.grc
+
+file_format: 1

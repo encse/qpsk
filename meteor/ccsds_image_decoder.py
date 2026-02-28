@@ -2,7 +2,6 @@ from gnuradio import gr
 import pmt
 from dataclasses import dataclass
 from typing import List, Optional
-from datetime import datetime, timezone, timedelta
 
 from decode_jpeg import decode_14_blocks
 
@@ -15,16 +14,6 @@ BLOCK_HEIGHT = 8
 IMAGE_WIDTH = BLOCKS_PER_LINE * BLOCK_WIDTH  # 1568
 
 
-# ---------------- DATA STRUCTURES ----------------
-
-@dataclass
-class SpacePacketHeader:
-    apid: int
-
-@dataclass
-class SpacePacket:
-    header: SpacePacketHeader
-    payload: bytes
 
 @dataclass
 class Segment:
@@ -32,21 +21,6 @@ class Segment:
     QF: int
     payload: bytes
 
-
-# ---------------- PARSERS ----------------
-
-SPACE_PACKET_HEADER_LEN = 6
-
-def parse_space_packet(data: bytes) -> SpacePacket:
-    if len(data) < SPACE_PACKET_HEADER_LEN:
-        raise ValueError("CCSDS header too short")
-
-    apid = ((data[0] & 0x07) << 8) | data[1]
-
-    return SpacePacket(
-        header=SpacePacketHeader(apid=apid),
-        payload=data[SPACE_PACKET_HEADER_LEN:]
-    )
 
 def parse_segment(data: bytes) -> Segment:
     if len(data) < 14:
@@ -70,10 +44,9 @@ class CcsdsImageDecoder(gr.basic_block):
     Output: message port "out" (u8vector, one image row per message)
     """
 
-    def __init__(self, apid: int):
+    def __init__(self):
         gr.basic_block.__init__(self, name="ccsds_image_decoder", in_sig=[], out_sig=[])
 
-        self.apid = int(apid)
         self.current_line: Optional[List[List[int]]] = None
 
         self.message_port_register_in(pmt.intern("in"))
@@ -81,13 +54,9 @@ class CcsdsImageDecoder(gr.basic_block):
         self.set_msg_handler(pmt.intern("in"), self._handle_msg)
 
     def _handle_msg(self, msg):
-        payload = bytes(pmt.u8vector_elements(pmt.cdr(msg)))
-
-        sp = parse_space_packet(payload)
-        if sp.header.apid != self.apid:
-            return
-
-        self._process_packet(sp)
+        data = pmt.cdr(msg) 
+        payload = bytes(pmt.u8vector_elements(data))
+        self._process_packet(payload)
 
     def _emit_rows(self, rows: List[List[int]]):
         for row in rows:
@@ -95,8 +64,8 @@ class CcsdsImageDecoder(gr.basic_block):
             out_msg = pmt.cons(pmt.PMT_NIL, vec)
             self.message_port_pub(pmt.intern("out"), out_msg)
 
-    def _process_packet(self, sp: SpacePacket):
-        seg = parse_segment(sp.payload)
+    def _process_packet(self, payload: bytes):
+        seg = parse_segment(payload)
 
         pixels_8x112 = decode_14_blocks(seg.payload, seg.QF)
 
