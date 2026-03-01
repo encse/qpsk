@@ -4,9 +4,15 @@ The project is using blocks from gr-satellites, follow the installation here.
 
 https://gr-satellites.readthedocs.io/en/latest/installation_intro.html
 
-I wanted to learn about OPQSK demodulation and picked Meteor M-N2.x LRPT as target. This series of the Meteor satellites has two active members as of 2026. Meteor M N2-3 and Meteor M N2-4. 
+I wanted to learn about OPQSK demodulation and picked Meteor M-N2.x LRPT as target. 
+This series of the Meteor weather satellites has two members as of 2026. Meteor M N2-3 and Meteor M N2-4 active on 137.9MHz 
+with a backup frequency of 137.1MHz.
 
-The project is organized into smaller GNU radio hier blocks (files with .grc and a matching .py and block.yml) and OOT modules (files without .grc).
+A detailed tutorial about reception is available at https://www.a-centauri.com/articoli/meteor-satellite-reception, this
+repository is only about the extraction of data.
+
+The project is organized into smaller GNU radio hier blocks (files with .grc and a matching .py and block.yml) and OOT 
+modules (files without .grc).
 
 # Usage
 ![overview](pics/overview.jpg)
@@ -41,9 +47,11 @@ If things go well you should see something like this.
 
 The LRPT downlink uses 3 channels out of 6, as of this writing channels 1, 2 and 4 are active, you can connect a CCSDS Image decoder to them.
 
-I was greatly inspired by how Satdump implements the protocol, and tried reimplement its metrics as well, these are exposed as 'doppler hz' from the costas loop, 'SNR (db)' from soft symbols and 'BER' from the viterbi stage. 
+I was greatly inspired by how Satdump implements the protocol, and tried reimplement its metrics as well, these are exposed as 'doppler hz' 
+from the costas loop, 'SNR (db)' from soft symbols and 'BER' from the viterbi stage. 
 
-It's worth checking out the OQPSK demodulator pipeline as well, which is a 1-1 reimplementation of what Satdump does, only in GNU radio terms. I tried to trim it down to only this version of Meteor, since the original one supports the previous generation as well. 
+It's worth checking out the OQPSK demodulator pipeline as well, which is a 1-1 reimplementation of what Satdump does, only in GNU radio terms. 
+I tried to trim it down to only this version of Meteor, since the original one supports the previous generation as well. 
 
 My implementation doesn't work with 80k samples, only the 72k line is implemented.
 
