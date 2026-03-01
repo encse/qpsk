@@ -1,1 +1,1 @@
-GRC_BLOCKS_PATH=. gnuradio-companion
+GRC_HIER_PATH=./meteor GRC_BLOCKS_PATH=. gnuradio-companion

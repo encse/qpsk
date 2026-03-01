@@ -8,7 +8,7 @@
 # Title: Meteor M N 2-x ,72k LRPT demodulator
 # Author: HA7NCS
 # Copyright: Copyright (c) 2026 David Nemeth-Csoka
-# Description: Meteor M-N2 LRPT (72k) QPSK demodulator.
+# Description: Meteor M-N2 LRPT (72k) OQPSK demodulator
 # GNU Radio version: 3.10.12.0
 
 from PyQt5 import Qt
@@ -71,7 +71,7 @@ import threading
 
 class meteor_demod(gr.top_block, Qt.QWidget):
 
-    def __init__(self):
+    def __init__(self, sample_rate=750000):
         gr.top_block.__init__(self, "Meteor M N 2-x ,72k LRPT demodulator", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Meteor M N 2-x ,72k LRPT demodulator")
@@ -103,9 +103,80 @@ class meteor_demod(gr.top_block, Qt.QWidget):
         self.flowgraph_started = threading.Event()
 
         ##################################################
+        # Parameters
+        ##################################################
+        self.sample_rate = sample_rate
+
+        ##################################################
         # Blocks
         ##################################################
 
+        self.qtgui_number_sink_0_1 = qtgui.number_sink(
+            gr.sizeof_float,
+            0,
+            qtgui.NUM_GRAPH_NONE,
+            1,
+            None # parent
+        )
+        self.qtgui_number_sink_0_1.set_update_time(0.10)
+        self.qtgui_number_sink_0_1.set_title('')
+
+        labels = ['SNR (dB)', '', '', '', '',
+            '', '', '', '', '']
+        units = ['', '', '', '', '',
+            '', '', '', '', '']
+        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
+            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
+        factor = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+
+        for i in range(1):
+            self.qtgui_number_sink_0_1.set_min(i, 0)
+            self.qtgui_number_sink_0_1.set_max(i, 1)
+            self.qtgui_number_sink_0_1.set_color(i, colors[i][0], colors[i][1])
+            if len(labels[i]) == 0:
+                self.qtgui_number_sink_0_1.set_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_number_sink_0_1.set_label(i, labels[i])
+            self.qtgui_number_sink_0_1.set_unit(i, units[i])
+            self.qtgui_number_sink_0_1.set_factor(i, factor[i])
+
+        self.qtgui_number_sink_0_1.enable_autoscale(False)
+        self._qtgui_number_sink_0_1_win = sip.wrapinstance(self.qtgui_number_sink_0_1.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_number_sink_0_1_win)
+        self.qtgui_number_sink_0_0 = qtgui.number_sink(
+            gr.sizeof_float,
+            0,
+            qtgui.NUM_GRAPH_NONE,
+            1,
+            None # parent
+        )
+        self.qtgui_number_sink_0_0.set_update_time(0.10)
+        self.qtgui_number_sink_0_0.set_title('')
+
+        labels = ['Frequency', '', '', '', '',
+            '', '', '', '', '']
+        units = ['', '', '', '', '',
+            '', '', '', '', '']
+        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
+            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
+        factor = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+
+        for i in range(1):
+            self.qtgui_number_sink_0_0.set_min(i, 0)
+            self.qtgui_number_sink_0_0.set_max(i, 1)
+            self.qtgui_number_sink_0_0.set_color(i, colors[i][0], colors[i][1])
+            if len(labels[i]) == 0:
+                self.qtgui_number_sink_0_0.set_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_number_sink_0_0.set_label(i, labels[i])
+            self.qtgui_number_sink_0_0.set_unit(i, units[i])
+            self.qtgui_number_sink_0_0.set_factor(i, factor[i])
+
+        self.qtgui_number_sink_0_0.enable_autoscale(False)
+        self._qtgui_number_sink_0_0_win = sip.wrapinstance(self.qtgui_number_sink_0_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_number_sink_0_0_win)
         self.qtgui_number_sink_0 = qtgui.number_sink(
             gr.sizeof_float,
             0,
@@ -138,16 +209,12 @@ class meteor_demod(gr.top_block, Qt.QWidget):
 
         self.qtgui_number_sink_0.enable_autoscale(False)
         self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.qwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win, 2, 0, 1, 1)
-        for r in range(2, 3):
-            self.top_grid_layout.setRowStretch(r, 1)
-        for c in range(0, 1):
-            self.top_grid_layout.setColumnStretch(c, 1)
+        self.top_layout.addWidget(self._qtgui_number_sink_0_win)
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
             window.WIN_RECTANGULAR, #wintype
             0, #fc
-            256000, #bw
+            sample_rate, #bw
             "", #name
             1,
             None # parent
@@ -230,13 +297,13 @@ class meteor_demod(gr.top_block, Qt.QWidget):
             self.qtgui_const_sink_x_0_0_0_0.set_line_alpha(i, alphas[i])
 
         self._qtgui_const_sink_x_0_0_0_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0_0_0_0.qwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_const_sink_x_0_0_0_0_win, 0, 0, 2, 1)
-        for r in range(0, 2):
+        self.top_grid_layout.addWidget(self._qtgui_const_sink_x_0_0_0_0_win, 0, 0, 3, 1)
+        for r in range(0, 3):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 1):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.meteor_lrpt_0 = meteor_lrpt(
-            sample_rate=256000,
+            sample_rate=sample_rate,
         )
         self.ccsds_image_viewer_0 = self.ccsds_image_viewer_0 = CcsdsImageViewer(1568)
         self._ccsds_image_viewer_0_win = sip.wrapinstance(self.ccsds_image_viewer_0.qwidget(), Qt.QWidget)
@@ -246,7 +313,7 @@ class meteor_demod(gr.top_block, Qt.QWidget):
         for c in range(1, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.ccsds_image_decoder_0 = CcsdsImageDecoder()
-        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/Users/encse/projects/qpsk/2026-02-13_07-39-09_256000SPS_137900000Hz.cf32', False, 0, 0)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/Users/encse/projects/qpsk/2026-02-28_08-30-42_750000SPS_137900000Hz.cf32', False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
 
 
@@ -259,6 +326,8 @@ class meteor_demod(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_file_source_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.meteor_lrpt_0, 0), (self.qtgui_const_sink_x_0_0_0_0, 0))
         self.connect((self.meteor_lrpt_0, 1), (self.qtgui_number_sink_0, 0))
+        self.connect((self.meteor_lrpt_0, 2), (self.qtgui_number_sink_0_0, 0))
+        self.connect((self.meteor_lrpt_0, 3), (self.qtgui_number_sink_0_1, 0))
 
 
     def closeEvent(self, event):
@@ -269,10 +338,25 @@ class meteor_demod(gr.top_block, Qt.QWidget):
 
         event.accept()
 
+    def get_sample_rate(self):
+        return self.sample_rate
 
+    def set_sample_rate(self, sample_rate):
+        self.sample_rate = sample_rate
+        self.meteor_lrpt_0.set_sample_rate(self.sample_rate)
+        self.qtgui_freq_sink_x_0.set_frequency_range(0, self.sample_rate)
+
+
+
+def argument_parser():
+    description = 'Meteor M-N2 LRPT (72k) OQPSK demodulator'
+    parser = ArgumentParser(description=description)
+    return parser
 
 
 def main(top_block_cls=meteor_demod, options=None):
+    if options is None:
+        options = argument_parser().parse_args()
 
     qapp = Qt.QApplication(sys.argv)
 

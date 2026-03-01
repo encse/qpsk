@@ -1,5 +1,5 @@
 id: meteor_lrpt
-label: Meteor LRPT
+label: Meteor M N 2.x LRPT 72k
 category: '[Meteor]'
 
 parameters:
@@ -51,6 +51,14 @@ outputs:
     dtype: float
     vlen: 1
     optional: true
+-   label: doppler_hz
+    dtype: float
+    vlen: 1
+    optional: true
+-   label: snr_db
+    dtype: float
+    vlen: 1
+    optional: true
 
 templates:
     imports: 'from meteor_lrpt import meteor_lrpt  # grc-generated hier_block'
@@ -58,7 +66,7 @@ templates:
     callbacks:
     - set_sample_rate(${ sample_rate })
 
-documentation: ./meteor_lrpt.py
+documentation: ./meteor/meteor_lrpt.py
 grc_source: /Users/encse/projects/qpsk/meteor/meteor_lrpt.grc
 
 file_format: 1

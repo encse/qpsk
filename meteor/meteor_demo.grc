@@ -4,16 +4,11 @@ options:
     catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
-    comment: 'Meteor M-N2 LRPT (72k) QPSK demodulator.
-
-
-      Accepts complex float32 (cf32) IQ input, with e.g. nominal sample rate 256 kHz
-
-      (adjustable). Demonstrates the complete LRPT demodulation pipeline using
-
-      gr-satellites blocks together with custom GRC blocks.'
+    comment: "Meteor M-N 2.x LRPT (72k) OQPSK demodulator to process signals \ncaptured\
+      \ at 137.9 or 137.1 MHz.\n\nAccepts complex float32 (cf32) IQ input. \n\nSet\
+      \ sample rate parameter to your input!"
     copyright: Copyright (c) 2026 David Nemeth-Csoka
-    description: Meteor M-N2 LRPT (72k) QPSK demodulator.
+    description: Meteor M-N2 LRPT (72k) OQPSK demodulator
     gen_cmake: 'On'
     gen_linking: dynamic
     generate_options: qt_gui
@@ -47,7 +42,7 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /Users/encse/projects/qpsk/2026-02-13_07-39-09_256000SPS_137900000Hz.cf32
+    file: /Users/encse/projects/qpsk/2026-02-28_08-30-42_750000SPS_137900000Hz.cf32
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -59,7 +54,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 248.0]
+    coordinate: [32, 240.0]
     rotation: 0
     state: enabled
 - name: ccsds_image_decoder_0
@@ -74,9 +69,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [472, 260.0]
+    coordinate: [480, 260.0]
     rotation: 0
     state: enabled
+- name: ccsds_image_decoder_0_0
+  id: ccsds_image_decoder
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [480, 356.0]
+    rotation: 0
+    state: disabled
 - name: ccsds_image_viewer_0
   id: ccsds_image_viewer
   parameters:
@@ -89,9 +99,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 256.0]
+    coordinate: [648, 256.0]
     rotation: 0
     state: enabled
+- name: ccsds_image_viewer_0_0
+  id: ccsds_image_viewer
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    gui_hint: ''
+    width: '1568'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [648, 352.0]
+    rotation: 0
+    state: disabled
 - name: meteor_lrpt_0
   id: meteor_lrpt
   parameters:
@@ -100,7 +125,7 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    sample_rate: '256000'
+    sample_rate: sample_rate
   states:
     bus_sink: false
     bus_source: false
@@ -137,7 +162,7 @@ blocks:
     color9: '"dark green"'
     comment: ''
     grid: 'False'
-    gui_hint: 0,0,2,1
+    gui_hint: 0,0,3,1
     label1: ''
     label10: ''
     label2: ''
@@ -197,7 +222,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [472, 428.0]
+    coordinate: [496, 436.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -218,7 +243,7 @@ blocks:
     autoscale: 'False'
     average: '1.0'
     axislabels: 'True'
-    bw: '256000'
+    bw: sample_rate
     color1: '"blue"'
     color10: '"dark blue"'
     color2: '"red"'
@@ -310,7 +335,7 @@ blocks:
     factor8: '1'
     factor9: '1'
     graph_type: qtgui.NUM_GRAPH_NONE
-    gui_hint: 2,0,1,1
+    gui_hint: ''
     label1: BER
     label10: ''
     label2: ''
@@ -341,7 +366,150 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [472, 512.0]
+    coordinate: [496, 504.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_number_sink_0_0
+  id: qtgui_number_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoscale: 'False'
+    avg: '0'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
+    comment: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_NONE
+    gui_hint: ''
+    label1: Frequency
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '1'
+    min: '0'
+    name: ''
+    nconnections: '1'
+    type: float
+    unit1: ''
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [496, 576.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_number_sink_0_1
+  id: qtgui_number_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoscale: 'False'
+    avg: '0'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
+    comment: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_NONE
+    gui_hint: ''
+    label1: SNR (dB)
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '1'
+    min: '0'
+    name: ''
+    nconnections: '1'
+    type: float
+    unit1: ''
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [496, 648.0]
+    rotation: 0
+    state: enabled
+- name: sample_rate
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Input sample rate
+    short_id: ''
+    type: ''
+    value: '750000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [32, 360.0]
     rotation: 0
     state: enabled
 
@@ -349,9 +517,13 @@ connections:
 - [blocks_file_source_0, '0', meteor_lrpt_0, '0']
 - [blocks_file_source_0, '0', qtgui_freq_sink_x_0, '0']
 - [ccsds_image_decoder_0, out, ccsds_image_viewer_0, in]
+- [ccsds_image_decoder_0_0, out, ccsds_image_viewer_0_0, in]
 - [meteor_lrpt_0, '0', qtgui_const_sink_x_0_0_0_0, '0']
 - [meteor_lrpt_0, '1', qtgui_number_sink_0, '0']
+- [meteor_lrpt_0, '2', qtgui_number_sink_0_0, '0']
+- [meteor_lrpt_0, '3', qtgui_number_sink_0_1, '0']
 - [meteor_lrpt_0, msu_mr_1, ccsds_image_decoder_0, in]
+- [meteor_lrpt_0, msu_mr_4, ccsds_image_decoder_0_0, in]
 
 metadata:
   file_format: 1

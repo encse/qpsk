@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: Meteor LRPT
+    title: Meteor M N 2.x LRPT 72k
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -46,7 +46,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 124.0]
+    coordinate: [968, 124.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0
@@ -62,7 +62,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 188.0]
+    coordinate: [968, 188.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0_0
@@ -78,7 +78,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 244.0]
+    coordinate: [968, 244.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0_0_0
@@ -94,7 +94,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 308.0]
+    coordinate: [968, 308.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0_0_0_0
@@ -110,7 +110,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 380.0]
+    coordinate: [968, 380.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0_0_0_0_0
@@ -126,7 +126,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 444.0]
+    coordinate: [968, 444.0]
     rotation: 0
     state: enabled
 - name: ccsds_apid_filter_0_0_0_0_0_0_0
@@ -142,7 +142,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 508.0]
+    coordinate: [968, 508.0]
     rotation: 0
     state: enabled
 - name: ccsds_channel_decoder_0
@@ -158,21 +158,6 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [376, 260.0]
-    rotation: 0
-    state: enabled
-- name: ccsds_space_packet_extractor_0
-  id: ccsds_space_packet_extractor
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [568, 292.0]
     rotation: 0
     state: enabled
 - name: oqpsk_demodulator_0
@@ -206,7 +191,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 124.0]
+    coordinate: [1112, 124.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_0
@@ -224,7 +209,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 188.0]
+    coordinate: [1112, 188.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_1
@@ -242,7 +227,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 244.0]
+    coordinate: [1112, 244.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_2
@@ -260,7 +245,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 308.0]
+    coordinate: [1112, 308.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_3
@@ -278,7 +263,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 380.0]
+    coordinate: [1112, 380.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_3_0
@@ -296,7 +281,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 444.0]
+    coordinate: [1112, 444.0]
     rotation: 0
     state: enabled
 - name: pad_sink_0_5
@@ -314,7 +299,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 508.0]
+    coordinate: [1112, 508.0]
     rotation: 0
     state: enabled
 - name: pad_sink_1
@@ -332,7 +317,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [448, 132.0]
+    coordinate: [376, 196.0]
     rotation: 0
     state: enabled
 - name: pad_sink_1_0
@@ -350,7 +335,43 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [600, 140.0]
+    coordinate: [576, 228.0]
+    rotation: 0
+    state: enabled
+- name: pad_sink_1_1
+  id: pad_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    label: doppler_hz
+    num_streams: '1'
+    optional: 'True'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [376, 356.0]
+    rotation: 0
+    state: enabled
+- name: pad_sink_1_1_0
+  id: pad_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    label: snr_db
+    num_streams: '1'
+    optional: 'True'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [376, 428.0]
     rotation: 0
     state: enabled
 - name: pad_source_0
@@ -370,7 +391,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [0, 260.0]
+    coordinate: [8, 292.0]
     rotation: 0
     state: enabled
 - name: sample_rate
@@ -390,6 +411,36 @@ blocks:
     coordinate: [144, 12.0]
     rotation: 0
     state: enabled
+- name: space_packet_assembler_0
+  id: space_packet_assembler
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [704, 292.0]
+    rotation: 0
+    state: enabled
+- name: vcdu_parser_0
+  id: vcdu_parser
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [576, 292.0]
+    rotation: 0
+    state: enabled
 
 connections:
 - [ccsds_apid_filter_0, out, pad_sink_0, in]
@@ -400,18 +451,20 @@ connections:
 - [ccsds_apid_filter_0_0_0_0_0_0, out, pad_sink_0_3_0, in]
 - [ccsds_apid_filter_0_0_0_0_0_0_0, out, pad_sink_0_5, in]
 - [ccsds_channel_decoder_0, '0', pad_sink_1_0, '0']
-- [ccsds_channel_decoder_0, cadus, ccsds_space_packet_extractor_0, cadus]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0_0_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0_0_0_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0_0_0_0_0, in]
-- [ccsds_space_packet_extractor_0, space_packets, ccsds_apid_filter_0_0_0_0_0_0_0,
-  in]
+- [ccsds_channel_decoder_0, cadus, vcdu_parser_0, in]
 - [oqpsk_demodulator_0, '0', pad_sink_1, '0']
 - [oqpsk_demodulator_0, '1', ccsds_channel_decoder_0, '0']
+- [oqpsk_demodulator_0, '2', pad_sink_1_1, '0']
+- [oqpsk_demodulator_0, '3', pad_sink_1_1_0, '0']
 - [pad_source_0, '0', oqpsk_demodulator_0, '0']
+- [space_packet_assembler_0, out, ccsds_apid_filter_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0_0_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0_0_0_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0_0_0_0_0, in]
+- [space_packet_assembler_0, out, ccsds_apid_filter_0_0_0_0_0_0_0, in]
+- [vcdu_parser_0, out, space_packet_assembler_0, in]
 
 metadata:
   file_format: 1

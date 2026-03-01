@@ -147,7 +147,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 132.0]
+    coordinate: [640, 132.0]
     rotation: 0
     state: enabled
 - name: satellites_decode_rs_ccsds_0
@@ -164,7 +164,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [808, 128.0]
+    coordinate: [800, 128.0]
     rotation: 0
     state: enabled
 - name: viterbi_0

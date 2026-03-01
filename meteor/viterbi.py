@@ -8,21 +8,71 @@
 # GNU Radio version: 3.10.12.0
 
 from gnuradio import gr
-from gnuradio.filter import firdes
-from gnuradio.fft import window
-import sys
-import signal
 import satellites.hier
-import threading
 import numpy as np
 from gnuradio import gr
 
-def _parity(x: int) -> int:
-    return bin(x).count("1") & 1
+
+def _parity_u32(x: int) -> int:
+    # parity of integer bits (0/1)
+    x ^= x >> 16
+    x ^= x >> 8
+    x ^= x >> 4
+    x &= 0xF
+    return (0x6996 >> x) & 1
+
+
+def _conv_encode_k7_r12(bits_u8: np.ndarray, poly0: int, poly1: int) -> np.ndarray:
+    """
+    Convolutional encode K=7, rate 1/2, polys given like the C++ code.
+    If a poly is negative, we invert that output bit (matches your mapping).
+    Output is unpacked bits (0/1) length = 2*len(bits).
+    """
+    inv0 = 1 if poly0 < 0 else 0
+    inv1 = 1 if poly1 < 0 else 0
+    p0 = abs(int(poly0))
+    p1 = abs(int(poly1))
+
+    reg = 0
+    out = np.empty(bits_u8.size * 2, dtype=np.uint8)
+
+    # K=7 => 7-bit shift reg. We'll keep it in lower 7 bits.
+    # Convention here: shift left, OR in new bit at LSB (common in many encoders).
+    # IMPORTANT: if your encoder uses opposite bit order, BER will differ.
+    # But for CCSDS K=7 this convention typically matches common implementations.
+    for i, b in enumerate(bits_u8):
+        bit = int(b) & 1
+        reg = ((reg << 1) | bit) & 0x7F
+
+        o0 = _parity_u32(reg & p0) ^ inv0
+        o1 = _parity_u32(reg & p1) ^ inv1
+
+        out[2 * i + 0] = o0
+        out[2 * i + 1] = o1
+
+    return out
+
 
 class ber_ccsds_soft_decoded(gr.basic_block):
-    def __init__(self, poly0=79, poly1=-109, constraint_len=7,
-                 window=4096, erase_eps=0.0, scale=2.5):
+    """
+    Compute SatDump-like BER proxy:
+
+      raw_u8 derived from soft float:
+        raw_u8 = round(soft*127 + 128) clipped to [0..255]
+      skip raw_u8 == 128
+      hard = (raw_u8 > 127)
+      compare hard to re-encoded bits from decoded bits
+      ber = (errors/total) * scale
+
+    Inputs:
+      0: soft float stream (carrier)
+      1: decoded bits stream (char, values 0/1, length = soft/2)
+
+    Output:
+      0: float BER stream (hold-last; updates when a full window is available)
+    """
+
+    def __init__(self, poly0=79, poly1=109, window=4096, erase_eps=0.0, scale=2.5):
         gr.basic_block.__init__(
             self,
             name="ber_ccsds_soft_decoded",
@@ -30,87 +80,82 @@ class ber_ccsds_soft_decoded(gr.basic_block):
             out_sig=[np.float32],
         )
 
-        self.inv0 = (int(poly0) < 0)
-        self.inv1 = (int(poly1) < 0)
-        self.g0 = abs(int(poly0))
-        self.g1 = abs(int(poly1))
+        self._poly0 = int(poly0)
+        self._poly1 = int(poly1)
+        self._window = int(window)
+        self._scale = float(scale)
+        self._erase_eps = float(erase_eps)
 
-        self.K = int(constraint_len)
-        self.mask = (1 << self.K) - 1
-        self.reg = 0
+        if self._window <= 0 or (self._window % 2) != 0:
+            raise ValueError("window must be positive and even (rate 1/2)")
 
-        self.window = int(window)
-        self.erase_eps = float(erase_eps)
-        self.scale = float(scale)
+        self._soft_buf = np.empty(self._window, dtype=np.float32)
+        self._dec_buf = np.empty(self._window // 2, dtype=np.uint8)
+        self._soft_fill = 0
+        self._dec_fill = 0
 
-        self.err0 = self.tot0 = 0
-        self.err1 = self.tot1 = 0
-        self.last = 0.0
-
-    def _encode_pair(self, bit: int):
-        self.reg = ((self.reg << 1) | (bit & 1)) & self.mask
-        e0 = _parity(self.reg & self.g0)
-        e1 = _parity(self.reg & self.g1)
-        if self.inv0:
-            e0 ^= 1
-        if self.inv1:
-            e1 ^= 1
-        return e0, e1
+        self._last = 10.0  # like your C++ initial "bad" value
 
     def general_work(self, input_items, output_items):
-        soft = input_items[0]
-        dec  = input_items[1]
-        out  = output_items[0]
+        soft_in = input_items[0]
+        dec_in = input_items[1]
+        out = output_items[0]
 
-        n_dec = len(dec)
-        n_soft = len(soft)
+        n_soft = len(soft_in)
+        n_dec = len(dec_in)
 
-        # Need 2 soft items per decoded bit, plus 1 extra for shift=1
+        # We need soft and decoded in the fixed ratio: window soft : window/2 decoded.
+        # Consume as much as we can to fill buffers.
+        soft_needed = self._window - self._soft_fill
+        dec_needed = (self._window // 2) - self._dec_fill
 
-        n_dec  = len(dec)
-        n_soft = len(soft)
-        n_out  = len(out)
-        # Need: for i = n-1, max soft index is 2*i+2 => 2*(n-1)+2 <= n_soft-1  => n <= n_soft//2
-        n = min(n_dec, n_soft // 2, n_out)
-        if n <= 0:
+        take_soft = min(n_soft, soft_needed)
+        take_dec = min(n_dec, dec_needed)
+
+        if take_soft > 0:
+            self._soft_buf[self._soft_fill:self._soft_fill + take_soft] = soft_in[:take_soft]
+            self._soft_fill += take_soft
+            self.consume(0, take_soft)
+
+        if take_dec > 0:
+            # ensure 0/1
+            self._dec_buf[self._dec_fill:self._dec_fill + take_dec] = (dec_in[:take_dec] & 1).astype(np.uint8)
+            self._dec_fill += take_dec
+            self.consume(1, take_dec)
+
+        # If we have a full window, compute BER and reset buffers
+        if self._soft_fill == self._window and self._dec_fill == (self._window // 2):
+            # float soft -> raw_u8 (C++-compatible semantics)
+            # 0.0 maps to 128 exactly (after rounding)
+            raw = np.rint(self._soft_buf * 127.0 + 128.0)
+            raw = np.clip(raw, 0.0, 255.0).astype(np.uint8)
+
+            # optional erasure around 0.0, if you ever want it
+            if self._erase_eps > 0.0:
+                er = np.abs(self._soft_buf) <= self._erase_eps
+                raw[er] = 128
+
+            # re-encode decoded bits
+            renc = _conv_encode_k7_r12(self._dec_buf, self._poly0, self._poly1)  # len == window
+
+            mask = (raw != 128)
+            total = int(mask.sum())
+            if total > 0:
+                hard = (raw > 127).astype(np.uint8)
+                errors = int((hard[mask] != renc[mask]).sum())
+                self._last = (errors / total) * self._scale
+            else:
+                self._last = 10.0
+
+            self._soft_fill = 0
+            self._dec_fill = 0
+
+        # Output: hold-last value (emit as many as scheduler requests)
+        n_out = len(out)
+        if n_out == 0:
             return 0
-
-        for i in range(n):
-            b = int(dec[i] & 1)
-            e0, e1 = self._encode_pair(b)
-
-            # shift 0: soft[2*i], soft[2*i+1]
-            # shift 1: soft[2*i+1], soft[2*i+2]
-            for shift in (0, 1):
-                s0 = float(soft[2*i + shift])
-                s1 = float(soft[2*i + shift + 1])
-
-                if abs(s0) <= self.erase_eps or abs(s1) <= self.erase_eps:
-                    continue
-
-                h0 = 1 if s0 > 0.0 else 0
-                h1 = 1 if s1 > 0.0 else 0
-
-                if shift == 0:
-                    self.err0 += (h0 != e0) + (h1 != e1)
-                    self.tot0 += 2
-                else:
-                    self.err1 += (h0 != e0) + (h1 != e1)
-                    self.tot1 += 2
-
-            if self.tot0 >= self.window and self.tot1 >= self.window:
-                ber0 = (self.err0 / self.tot0) * self.scale
-                ber1 = (self.err1 / self.tot1) * self.scale
-                self.last = ber0 if ber0 <= ber1 else ber1
-                self.err0 = self.tot0 = 0
-                self.err1 = self.tot1 = 0
-
-            out[i] = self.last
-
-        self.consume(0, 2 * n)  # keep 1 soft sample for shift=1 lookahead naturally
-        self.consume(1, n)
-        return n
-
+        out[:] = np.float32(self._last)
+        return n_out
 
 
 class Viterbi(gr.hier_block2):
@@ -120,17 +165,7 @@ class Viterbi(gr.hier_block2):
             gr.io_signature(1, 1, gr.sizeof_float),
             gr.io_signature(2, 2, [gr.sizeof_char, gr.sizeof_float]),
         )
-
-        ##################################################
-        # Parameters
-        ##################################################
         self.code = code
-
-
-        ##################################################
-        # Blocks
-        ##################################################
-
 
         if code not in ['CCSDS', 'NASA-DSN', 'CCSDS uninverted', 'NASA-DSN uninverted']:
             raise Exception("coki")
@@ -145,13 +180,9 @@ class Viterbi(gr.hier_block2):
         self.vit = satellites.hier.ccsds_viterbi(code)
         self.ber = ber_ccsds_soft_decoded(poly0=polys[0], poly1=polys[1], window=4096, erase_eps=0.0, scale=2.5)
 
-        ##################################################
-        # Connections
-        ##################################################
         self.connect((self, 0), (self.vit, 0))
         self.connect((self.vit, 0), (self, 0))          # decoded -> out0
 
-        # BER needs BOTH inputs: soft + decoded
         self.connect((self, 0), (self.ber, 0))          # soft float
         self.connect((self.vit, 0), (self.ber, 1))      # decoded bits 0/1
         self.connect((self.ber, 0), (self, 1))          # BER float -> out1

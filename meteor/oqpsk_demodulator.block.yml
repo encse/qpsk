@@ -22,6 +22,14 @@ outputs:
 -   label: soft_symbols
     dtype: float
     vlen: 1
+-   label: doppler_hz
+    dtype: float
+    vlen: 1
+    optional: true
+-   label: snr_db
+    dtype: float
+    vlen: 1
+    optional: true
 
 templates:
     imports: 'from oqpsk_demodulator import oqpsk_demodulator  # grc-generated hier_block'
@@ -29,7 +37,7 @@ templates:
     callbacks:
     - set_sample_rate(${ sample_rate })
 
-documentation: ./oqpsk_demodulator.py
+documentation: ./meteor/oqpsk_demodulator.py
 grc_source: /Users/encse/projects/qpsk/meteor/oqpsk_demodulator.grc
 
 file_format: 1
