@@ -4,9 +4,9 @@ The project is using blocks from gr-satellites, follow the installation here.
 
 https://gr-satellites.readthedocs.io/en/latest/installation_intro.html
 
-I wanted to learn about OPQSK demodulation and picked Meteor M-N2.x LRPT as target. This series of the Meteor satellites has two active members as of 2026. Meteor M N-2-3 and Meteor M N-2-4. 
+I wanted to learn about OPQSK demodulation and picked Meteor M-N2.x LRPT as target. This series of the Meteor satellites has two active members as of 2026. Meteor M N2-3 and Meteor M N2-4. 
 
-The project is organizes into smaller GNU radio hier blocks (files with .grc and a matching .py and block.yml) and OOT modules (files without .grc).
+The project is organized into smaller GNU radio hier blocks (files with .grc and a matching .py and block.yml) and OOT modules (files without .grc).
 
 # Usage
 ![overview](pics/overview.jpg)
