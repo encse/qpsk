@@ -7,11 +7,10 @@
 # Title: Not titled yet
 # GNU Radio version: 3.10.12.0
 
-from gnuradio import gr
-import satellites.hier
 import numpy as np
 from gnuradio import gr
-
+from gnuradio import gr
+from gnuradio import fec
 
 def _parity_u32(x: int) -> int:
     # parity of integer bits (0/1)
@@ -94,7 +93,7 @@ class ber_ccsds_soft_decoded(gr.basic_block):
         self._soft_fill = 0
         self._dec_fill = 0
 
-        self._last = 10.0  # like your C++ initial "bad" value
+        self._last = 10.0 
 
     def general_work(self, input_items, output_items):
         soft_in = input_items[0]
@@ -125,18 +124,17 @@ class ber_ccsds_soft_decoded(gr.basic_block):
 
         # If we have a full window, compute BER and reset buffers
         if self._soft_fill == self._window and self._dec_fill == (self._window // 2):
-            # float soft -> raw_u8 (C++-compatible semantics)
+            # float soft -> raw_u8 
             # 0.0 maps to 128 exactly (after rounding)
             raw = np.rint(self._soft_buf * 127.0 + 128.0)
             raw = np.clip(raw, 0.0, 255.0).astype(np.uint8)
 
-            # optional erasure around 0.0, if you ever want it
             if self._erase_eps > 0.0:
                 er = np.abs(self._soft_buf) <= self._erase_eps
                 raw[er] = 128
 
             # re-encode decoded bits
-            renc = _conv_encode_k7_r12(self._dec_buf, self._poly0, self._poly1)  # len == window
+            renc = _conv_encode_k7_r12(self._dec_buf, self._poly0, self._poly1)
 
             mask = (raw != 128)
             total = int(mask.sum())
@@ -167,21 +165,21 @@ class Viterbi(gr.hier_block2):
         )
         self.code = code
 
-        if code not in ['CCSDS', 'NASA-DSN', 'CCSDS uninverted', 'NASA-DSN uninverted']:
-            raise Exception("coki")
-
         
-        polys = {'CCSDS': [79, -109],
-            'NASA-DSN': [-109, 79],
-            'CCSDS uninverted': [79, 109],
-            'NASA-DSN uninverted': [109, 79],
-            }[code]
+        polys = [109, 79]
     
-        self.vit = satellites.hier.ccsds_viterbi(code)
-        self.ber = ber_ccsds_soft_decoded(poly0=polys[0], poly1=polys[1], window=4096, erase_eps=0.0, scale=2.5)
 
+        self.dec_cc = dec_cc = fec.cc_decoder.make(
+            80, 7, 2, polys, 0, -1, fec.CC_STREAMING, False)
+
+        self.vit = fec.extended_decoder(
+            decoder_obj_list=dec_cc, threading=None, ann=None,
+            puncpat='11', integration_period=10000)
+
+        self.connect((self.vit, 0), (self, 0))
         self.connect((self, 0), (self.vit, 0))
-        self.connect((self.vit, 0), (self, 0))          # decoded -> out0
+
+        self.ber = ber_ccsds_soft_decoded(poly0=polys[0], poly1=polys[1], window=4096, erase_eps=0.0, scale=2.5)
 
         self.connect((self, 0), (self.ber, 0))          # soft float
         self.connect((self.vit, 0), (self.ber, 1))      # decoded bits 0/1
