@@ -51,9 +51,7 @@ The later stages follow the descriptions found in http://jmfriedt.free.fr/glmf_m
 
 I also used https://github.com/Digitelektro/MeteorDemod for inspiration. I think the jpg decoder part is ported from there.
 
-I might want to get rid of the gr-satellites dependency later, but it comes with a Viterbi decoder that I could simply extend with BER calculation. 
-
-The other important asset that comes from gr-satellites is the reed-solomon decoder as a wrapper around [libfec](https://github.com/daniestevez/gr-satellites/tree/1358c09ee1924b2c407ddc60859ea083add925d8/lib/libfec). It would be hard to port this to python, but we will see.
+I might want to get rid of the gr-satellites dependency later, but it comes with a proper reed-solomon decoder as a wrapper around [libfec](https://github.com/daniestevez/gr-satellites/tree/1358c09ee1924b2c407ddc60859ea083add925d8/lib/libfec). It would be hard to port this to python, but we will see.
 
 ## Known issues
 
