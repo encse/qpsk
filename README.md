@@ -1,4 +1,4 @@
-# GNU flowgraphs for Meteor M-N2.x LRPT transmissions
+# GNU flowgraphs for Meteor M-N2.x LRPT
 
 The project is using blocks from gr-satellites, follow the installation here.
 
