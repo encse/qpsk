@@ -79,9 +79,7 @@ class ccsds_channel_decoder(gr.hier_block2):
         # Blocks
         ##################################################
 
-        self.viterbi_0 = Viterbi(
-            code="NASA-DSN uninverted",
-        )
+        self.viterbi_0 = Viterbi()
         self.satellites_decode_rs_ccsds_0 = satellites.decode_rs(False, 4)
         self.satellites_ccsds_descrambler_0 = satellites.hier.ccsds_descrambler()
         self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(2, digital.DIFF_DIFFERENTIAL)

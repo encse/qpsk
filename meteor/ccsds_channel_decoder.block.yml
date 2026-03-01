@@ -24,7 +24,7 @@ templates:
     make: ccsds_channel_decoder()
     callbacks: []
 
-documentation: ./ccsds_channel_decoder.py
+documentation: ./meteor/ccsds_channel_decoder.py
 grc_source: /Users/encse/projects/qpsk/meteor/ccsds_channel_decoder.grc
 
 file_format: 1

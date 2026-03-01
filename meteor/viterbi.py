@@ -157,14 +157,12 @@ class ber_ccsds_soft_decoded(gr.basic_block):
 
 
 class Viterbi(gr.hier_block2):
-    def __init__(self, code="CCSDS uninverted"):
+    def __init__(self):
         gr.hier_block2.__init__(
             self, "viterbi",
             gr.io_signature(1, 1, gr.sizeof_float),
             gr.io_signature(2, 2, [gr.sizeof_char, gr.sizeof_float]),
         )
-        self.code = code
-
         
         polys = [109, 79]
     
@@ -185,11 +183,5 @@ class Viterbi(gr.hier_block2):
         self.connect((self.vit, 0), (self.ber, 1))      # decoded bits 0/1
         self.connect((self.ber, 0), (self, 1))          # BER float -> out1
 
-
-    def get_code(self):
-        return self.code
-
-    def set_code(self, code):
-        self.code = code
 
 

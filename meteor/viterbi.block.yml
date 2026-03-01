@@ -2,13 +2,6 @@ id: viterbi
 label: Viterbi decoder
 category: '[GRC Hier Blocks]'
 
-parameters:
--   id: code
-    label: code
-    dtype: string
-    default: '"CCSDS uninverted"'
-    hide: none
-
 inputs:
 -   label: in
     dtype: float
@@ -24,8 +17,6 @@ outputs:
 
 templates:
     imports: 'from viterbi import Viterbi  # grc-generated hier_block'
-    make: "Viterbi(\n    code=${ code },\n)"
-    callbacks:
-    - set_code(${ code })
+    make: "Viterbi()"
 
 file_format: 1

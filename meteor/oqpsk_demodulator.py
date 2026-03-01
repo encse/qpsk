@@ -75,8 +75,8 @@ class oqpsk_demodulator(gr.hier_block2):
         # Connections
         ##################################################
         self.connect((self.analog_agc2_xx_0, 0), (self.fir_filter_xxx_1, 0))
-        self.connect((self.blocks_complex_to_float_0, 0), (self.blocks_interleave_0, 0))
         self.connect((self.blocks_complex_to_float_0, 1), (self.blocks_interleave_0, 1))
+        self.connect((self.blocks_complex_to_float_0, 0), (self.blocks_interleave_0, 0))
         self.connect((self.blocks_complex_to_float_0_0, 1), (self.blocks_delay_0_0, 0))
         self.connect((self.blocks_complex_to_float_0_0, 0), (self.blocks_float_to_complex_0_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_float_to_complex_0_0, 1))
